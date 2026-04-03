@@ -313,7 +313,9 @@
     // ──────────────────────────────────────────────
     // 설정: Vercel 배포 후 자동으로 같은 도메인 사용
     // ──────────────────────────────────────────────
-    const API_BASE = ''; // 같은 도메인이면 빈 문자열 (Vercel 자동)
+    // Cloudflare Worker URL 입력 (예: https://voice-inbox.your-name.workers.dev)
+    // Vercel 사용시 빈 문자열('')로 두면 됨
+    const API_BASE = 'https://voice-inbox.your-name.workers.dev'; // ← Worker URL로 변경
 
     // ──────────────────────────────────────────────
     // 상태
