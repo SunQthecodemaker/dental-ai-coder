@@ -8,612 +8,420 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: 'Segoe UI', -apple-system, sans-serif;
-    background: #f0f4f8;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  background: #f0f4f8;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  /* 헤더 */
-  header {
-    background: #1a56db;
-    color: white;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    flex-shrink: 0;
-  }
+/* ── 헤더 ── */
+header {
+  background: #1a56db;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+  z-index: 10;
+}
+header h1 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.header-right { display: flex; align-items: center; gap: 8px; }
 
-  header h1 {
-    font-size: 17px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+.conn-badge {
+  font-size: 12px; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.1);
+}
+.conn-badge .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.conn-badge.checking .dot { background: #fbbf24; animation: pulse-dot 1s infinite; }
+.conn-badge.ok .dot { background: #34d399; }
+.conn-badge.ok { background: rgba(52,211,153,0.2); border-color: rgba(52,211,153,0.4); }
+.conn-badge.fail .dot { background: #f87171; }
+.conn-badge.fail { background: rgba(248,113,113,0.2); border-color: rgba(248,113,113,0.4); }
+.conn-badge.none .dot { background: #94a3b8; }
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
 
-  header h1 span.icon { font-size: 20px; }
+.hdr-btn {
+  font-size: 12px; padding: 4px 10px; border-radius: 20px;
+  background: rgba(255,255,255,0.15); color: white;
+  border: 1px solid rgba(255,255,255,0.3); cursor: pointer;
+  transition: background 0.2s;
+}
+.hdr-btn:hover { background: rgba(255,255,255,0.25); }
+.hdr-btn.connected { background: rgba(52,211,153,0.2); border-color: rgba(52,211,153,0.4); }
 
-  .header-right { display: flex; align-items: center; gap: 10px; }
+/* ── 메인 레이아웃 (좌+우) ── */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
 
-  .api-status {
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.15);
-    cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.3);
-    transition: background 0.2s;
-  }
-  .api-status:hover { background: rgba(255,255,255,0.25); }
-  .api-status.connected { background: rgba(52,211,153,0.25); border-color: rgba(52,211,153,0.5); }
+/* ── 왼쪽: 채팅 패널 ── */
+.chat-panel {
+  width: 420px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e2e8f0;
+  background: white;
+  flex-shrink: 0;
+}
 
-  .conn-badge {
-    font-size: 12px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 500;
-    background: rgba(255,255,255,0.1);
-  }
-  .conn-badge .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .conn-badge.checking .dot {
-    background: #fbbf24;
-    animation: pulse-dot 1s infinite;
-  }
-  .conn-badge.ok .dot { background: #34d399; }
-  .conn-badge.ok { background: rgba(52,211,153,0.2); border-color: rgba(52,211,153,0.4); }
-  .conn-badge.fail .dot { background: #f87171; }
-  .conn-badge.fail { background: rgba(248,113,113,0.2); border-color: rgba(248,113,113,0.4); }
-  .conn-badge.none .dot { background: #94a3b8; }
-  @keyframes pulse-dot {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.7); }
-  }
+.preset-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  overflow-x: auto;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+.preset-bar::-webkit-scrollbar { height: 3px; }
+.preset-bar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+.preset-chip {
+  white-space: nowrap; font-size: 12px; padding: 4px 10px;
+  border-radius: 20px; border: 1px solid #e2e8f0;
+  background: white; color: #475569; cursor: pointer;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.preset-chip:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
 
-  .clear-btn {
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.15);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.3);
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .clear-btn:hover { background: rgba(255,255,255,0.25); }
+.messages {
+  flex: 1; overflow-y: auto;
+  padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
 
-  /* 메인 레이아웃 */
-  .main {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
+/* 웰컴 */
+.welcome { text-align: center; padding: 30px 16px; color: #64748b; }
+.welcome .emoji { font-size: 40px; margin-bottom: 10px; }
+.welcome h2 { font-size: 17px; color: #1e293b; margin-bottom: 6px; }
+.welcome p { font-size: 13px; line-height: 1.6; }
 
-  /* 사이드바 */
-  .sidebar {
-    width: 220px;
-    background: white;
-    border-right: 1px solid #e2e8f0;
-    padding: 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex-shrink: 0;
-    overflow-y: auto;
-  }
+/* 메시지 버블 */
+.msg { display: flex; gap: 8px; }
+.msg.user { flex-direction: row-reverse; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.msg.user .avatar { background: #dbeafe; }
+.msg.assistant .avatar { background: #f0fdf4; }
+.bubble { max-width: calc(100% - 80px); padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.7; word-break: break-word; }
+.msg.user .bubble { background: #1a56db; color: white; border-bottom-right-radius: 3px; }
+.msg.assistant .bubble { background: #f8fafc; color: #1e293b; border-bottom-left-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
-  .sidebar-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 4px 8px;
-    margin-bottom: 4px;
-  }
+.bubble h1,.bubble h2,.bubble h3 { margin: 10px 0 4px; color: #1e293b; font-size: 14px; }
+.bubble p { margin-bottom: 6px; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble ul,.bubble ol { padding-left: 18px; margin-bottom: 6px; }
+.bubble li { margin-bottom: 3px; }
+.bubble code:not(pre code) { background: #f1f5f9; color: #e11d48; padding: 1px 4px; border-radius: 3px; font-family: Consolas,monospace; font-size: 12px; }
+.msg.user .bubble code:not(pre code) { background: rgba(255,255,255,0.2); color: #fde68a; }
 
-  .preset-btn {
-    width: 100%;
-    text-align: left;
-    padding: 9px 12px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background: white;
-    font-size: 13px;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.15s;
-    line-height: 1.4;
-  }
-  .preset-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
-  .preset-btn .label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.code-wrapper { margin: 8px 0; border-radius: 8px; overflow: hidden; border: 1px solid #2d3748; }
+.code-header { display: flex; align-items: center; justify-content: space-between; background: #1a202c; padding: 6px 12px; font-size: 11px; color: #a0aec0; }
+.copy-btn { background: none; border: 1px solid #4a5568; color: #a0aec0; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+.copy-btn:hover { background: #4a5568; color: white; }
+.copy-btn.copied { background: #276749; border-color: #276749; color: #9ae6b4; }
+pre { margin: 0 !important; }
 
-  /* 채팅 영역 */
-  .chat-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+.loading-dots { display: flex; gap: 4px; padding: 4px 0; }
+.loading-dots span { width: 7px; height: 7px; background: #94a3b8; border-radius: 50%; animation: bounce 1.2s infinite; }
+.loading-dots span:nth-child(2) { animation-delay: .2s; }
+.loading-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
 
-  .messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+.msg-image { max-width: 200px; border-radius: 8px; margin-bottom: 4px; display: block; border: 1px solid rgba(0,0,0,0.08); }
+.error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 8px; font-size: 12px; }
 
-  /* 웰컴 메시지 */
-  .welcome {
-    text-align: center;
-    padding: 40px 20px;
-    color: #64748b;
-  }
-  .welcome .emoji { font-size: 48px; margin-bottom: 12px; }
-  .welcome h2 { font-size: 20px; color: #1e293b; margin-bottom: 8px; }
-  .welcome p { font-size: 14px; line-height: 1.6; }
+/* 입력창 */
+.input-area { padding: 10px 12px 12px; border-top: 1px solid #e2e8f0; flex-shrink: 0; }
+.input-row { display: flex; gap: 8px; align-items: flex-end; }
+textarea {
+  flex: 1; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px;
+  font-size: 13px; font-family: inherit; resize: none; outline: none;
+  min-height: 40px; max-height: 120px; line-height: 1.5; color: #1e293b;
+  transition: border-color 0.2s;
+}
+textarea:focus { border-color: #1a56db; }
+textarea::placeholder { color: #94a3b8; }
+.send-btn {
+  width: 40px; height: 40px; background: #1a56db; color: white;
+  border: none; border-radius: 10px; cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s; flex-shrink: 0;
+}
+.send-btn:hover { background: #1e40af; }
+.send-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+.input-hint { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 5px; }
 
-  /* 메시지 버블 */
-  .msg { display: flex; gap: 10px; max-width: 100%; }
-  .msg.user { flex-direction: row-reverse; }
+/* ── 리사이저 ── */
+.resizer {
+  width: 5px; background: #e2e8f0; cursor: col-resize; flex-shrink: 0;
+  transition: background 0.2s;
+}
+.resizer:hover { background: #93c5fd; }
 
-  .avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-  .msg.user .avatar { background: #dbeafe; }
-  .msg.assistant .avatar { background: #f0fdf4; }
+/* ── 오른쪽: 캔버스 패널 ── */
+.canvas-panel {
+  flex: 1; display: flex; flex-direction: column; background: #1e293b; overflow: hidden;
+}
 
-  .bubble {
-    max-width: calc(100% - 90px);
-    padding: 12px 16px;
-    border-radius: 16px;
-    font-size: 14px;
-    line-height: 1.7;
-    word-break: break-word;
-  }
+.canvas-toolbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: #0f172a; border-bottom: 1px solid #334155;
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.toolbar-group { display: flex; gap: 4px; align-items: center; }
+.toolbar-sep { width: 1px; height: 22px; background: #334155; margin: 0 4px; }
 
-  .msg.user .bubble {
-    background: #1a56db;
-    color: white;
-    border-bottom-right-radius: 4px;
-  }
+.tool-btn {
+  width: 32px; height: 32px; border-radius: 7px; border: 1px solid #334155;
+  background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; position: relative;
+}
+.tool-btn:hover { background: #334155; color: #e2e8f0; }
+.tool-btn.active { background: #1a56db; border-color: #1a56db; color: white; }
+.tool-btn[title]:hover::after {
+  content: attr(title); position: absolute; bottom: -28px; left: 50%;
+  transform: translateX(-50%); background: #0f172a; color: #e2e8f0;
+  font-size: 11px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; z-index: 20;
+}
 
-  .msg.assistant .bubble {
-    background: white;
-    color: #1e293b;
-    border-bottom-left-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
+.color-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid #475569;
+  cursor: pointer; transition: border-color 0.15s; flex-shrink: 0;
+}
+.color-btn.active { border-color: white; }
+.color-btn:hover { border-color: #94a3b8; }
 
-  /* 마크다운 스타일 */
-  .bubble h1, .bubble h2, .bubble h3 {
-    margin: 12px 0 6px;
-    color: #1e293b;
-    font-size: 15px;
-  }
-  .bubble p { margin-bottom: 8px; }
-  .bubble p:last-child { margin-bottom: 0; }
-  .bubble ul, .bubble ol { padding-left: 20px; margin-bottom: 8px; }
-  .bubble li { margin-bottom: 4px; }
-  .bubble strong { font-weight: 600; }
-  .bubble code:not(pre code) {
-    background: #f1f5f9;
-    color: #e11d48;
-    padding: 1px 5px;
-    border-radius: 4px;
-    font-family: 'Consolas', monospace;
-    font-size: 13px;
-  }
-  .msg.user .bubble code:not(pre code) {
-    background: rgba(255,255,255,0.2);
-    color: #fde68a;
-  }
+input[type=range].size-slider {
+  width: 70px; accent-color: #1a56db;
+}
+input[type=color].custom-color {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid #475569;
+  cursor: pointer; padding: 0; background: none;
+}
 
-  /* 코드 블록 */
-  .code-wrapper {
-    margin: 10px 0;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #2d3748;
-  }
+.canvas-area-label {
+  font-size: 11px; color: #64748b; margin-left: auto;
+}
 
-  .code-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #1a202c;
-    padding: 7px 14px;
-    font-size: 12px;
-    color: #a0aec0;
-  }
+.action-btn {
+  padding: 5px 14px; border-radius: 7px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; transition: all 0.15s;
+}
+.btn-clear { background: #374151; color: #9ca3af; }
+.btn-clear:hover { background: #4b5563; color: white; }
+.btn-send-canvas {
+  background: #1a56db; color: white;
+}
+.btn-send-canvas:hover { background: #1e40af; }
+.btn-send-canvas:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
 
-  .copy-btn {
-    background: none;
-    border: 1px solid #4a5568;
-    color: #a0aec0;
-    padding: 3px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 11px;
-    transition: all 0.15s;
-  }
-  .copy-btn:hover { background: #4a5568; color: white; }
-  .copy-btn.copied { background: #276749; border-color: #276749; color: #9ae6b4; }
+/* 캔버스 드롭존 */
+.canvas-drop-zone {
+  flex: 1; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.canvas-drop-zone.dragover { outline: 2px dashed #1a56db; outline-offset: -4px; }
 
-  pre { margin: 0 !important; }
-  pre code { border-radius: 0 !important; }
+#bgCanvas, #drawCanvas {
+  position: absolute; top: 0; left: 0;
+}
+#bgCanvas { z-index: 1; }
+#drawCanvas { z-index: 2; }
 
-  /* 로딩 */
-  .loading-dots {
-    display: flex;
-    gap: 5px;
-    padding: 8px 0;
-  }
-  .loading-dots span {
-    width: 8px; height: 8px;
-    background: #94a3b8;
-    border-radius: 50%;
-    animation: bounce 1.2s infinite;
-  }
-  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-    40% { transform: translateY(-6px); opacity: 1; }
-  }
+.canvas-placeholder {
+  text-align: center; color: #475569; pointer-events: none; z-index: 0;
+  user-select: none;
+}
+.canvas-placeholder .ph-icon { font-size: 52px; margin-bottom: 12px; }
+.canvas-placeholder h3 { font-size: 16px; color: #64748b; margin-bottom: 8px; }
+.canvas-placeholder p { font-size: 13px; line-height: 1.7; color: #475569; }
+.canvas-placeholder kbd {
+  background: #334155; color: #94a3b8; padding: 2px 7px;
+  border-radius: 4px; font-size: 11px; font-family: monospace;
+}
 
-  /* 입력창 */
-  .input-area {
-    padding: 14px 20px 16px;
-    background: white;
-    border-top: 1px solid #e2e8f0;
-    flex-shrink: 0;
-  }
+/* 캔버스 전송 입력 */
+.canvas-input-row {
+  display: flex; gap: 8px; padding: 10px 14px;
+  background: #0f172a; border-top: 1px solid #334155; flex-shrink: 0;
+}
+.canvas-input-row input {
+  flex: 1; padding: 8px 12px; background: #1e293b; border: 1px solid #334155;
+  border-radius: 8px; color: #e2e8f0; font-size: 13px; outline: none;
+}
+.canvas-input-row input:focus { border-color: #1a56db; }
+.canvas-input-row input::placeholder { color: #475569; }
 
-  .input-row {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  textarea {
-    flex: 1;
-    padding: 11px 14px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 14px;
-    font-family: inherit;
-    resize: none;
-    outline: none;
-    min-height: 46px;
-    max-height: 160px;
-    line-height: 1.5;
-    transition: border-color 0.2s;
-    color: #1e293b;
-  }
-  textarea:focus { border-color: #1a56db; }
-  textarea::placeholder { color: #94a3b8; }
-
-  .send-btn {
-    width: 46px;
-    height: 46px;
-    background: #1a56db;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 18px;
-    transition: background 0.2s, transform 0.1s;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .send-btn:hover { background: #1e40af; }
-  .send-btn:active { transform: scale(0.95); }
-  .send-btn:disabled { background: #94a3b8; cursor: not-allowed; }
-
-  .img-btn {
-    width: 46px;
-    height: 46px;
-    background: white;
-    color: #64748b;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 18px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-  }
-  .img-btn:hover { border-color: #1a56db; color: #1a56db; background: #eff6ff; }
-  .img-btn.has-image { border-color: #1a56db; background: #eff6ff; color: #1a56db; }
-
-  .image-preview-wrap {
-    max-width: 900px;
-    margin: 0 auto 8px;
-    display: none;
-  }
-  .image-preview-wrap.show { display: flex; align-items: center; gap: 10px; }
-  .image-preview-wrap img {
-    max-height: 120px;
-    max-width: 200px;
-    border-radius: 10px;
-    border: 1.5px solid #e2e8f0;
-    object-fit: cover;
-  }
-  .img-remove {
-    background: #fee2e2;
-    color: #dc2626;
-    border: none;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .img-remove:hover { background: #fecaca; }
-
-  /* 메시지 내 이미지 */
-  .msg-image {
-    max-width: 260px;
-    border-radius: 10px;
-    margin-bottom: 6px;
-    display: block;
-    border: 1px solid rgba(0,0,0,0.08);
-  }
-
-  .hint {
-    text-align: center;
-    font-size: 11px;
-    color: #94a3b8;
-    margin-top: 8px;
-  }
-
-  /* API 키 모달 */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.show { display: flex; }
-
-  .modal {
-    background: white;
-    border-radius: 16px;
-    padding: 28px;
-    width: 420px;
-    max-width: 90vw;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-  }
-
-  .modal h2 {
-    font-size: 18px;
-    margin-bottom: 8px;
-    color: #1e293b;
-  }
-
-  .modal p {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-
-  .modal label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 6px;
-  }
-
-  .modal input {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 14px;
-    outline: none;
-    margin-bottom: 8px;
-    font-family: monospace;
-  }
-  .modal input:focus { border-color: #1a56db; }
-
-  .model-select {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 14px;
-    outline: none;
-    margin-bottom: 20px;
-    background: white;
-    color: #1e293b;
-  }
-  .model-select:focus { border-color: #1a56db; }
-
-  .modal-btns {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-  }
-
-  .btn-cancel {
-    padding: 10px 18px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: white;
-    color: #64748b;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  .btn-save {
-    padding: 10px 22px;
-    border: none;
-    border-radius: 10px;
-    background: #1a56db;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .btn-save:hover { background: #1e40af; }
-
-  .api-guide {
-    background: #f8fafc;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 16px;
-    font-size: 12px;
-    color: #475569;
-    line-height: 1.7;
-    border: 1px solid #e2e8f0;
-  }
-  .api-guide a { color: #1a56db; }
-
-  /* 에러 */
-  .error-msg {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    margin: 4px 0;
-  }
+/* ── 모달 ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 100;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: white; border-radius: 16px; padding: 28px;
+  width: 420px; max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal h2 { font-size: 18px; margin-bottom: 8px; color: #1e293b; }
+.modal p { font-size: 13px; color: #64748b; margin-bottom: 16px; line-height: 1.6; }
+.modal label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+.modal input[type=password], .modal input[type=text] {
+  width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0;
+  border-radius: 8px; font-size: 13px; outline: none; margin-bottom: 12px; font-family: monospace;
+}
+.modal input:focus { border-color: #1a56db; }
+.model-select {
+  width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0;
+  border-radius: 8px; font-size: 13px; outline: none; margin-bottom: 18px;
+  background: white; color: #1e293b;
+}
+.modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-cancel { padding: 9px 16px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; color: #64748b; cursor: pointer; font-size: 13px; }
+.btn-save { padding: 9px 20px; border: none; border-radius: 8px; background: #1a56db; color: white; cursor: pointer; font-size: 13px; font-weight: 600; }
+.btn-save:hover { background: #1e40af; }
+.api-guide { background: #f8fafc; border-radius: 7px; padding: 10px; margin-bottom: 14px; font-size: 12px; color: #475569; line-height: 1.7; border: 1px solid #e2e8f0; }
+.api-guide a { color: #1a56db; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1><span class="icon">🦷</span> 치과 홈페이지 AI 코드 도우미</h1>
+  <h1>🦷 치과 홈페이지 AI 코드 도우미</h1>
   <div class="header-right">
     <div class="conn-badge none" id="connBadge">
       <span class="dot"></span>
       <span id="connText">API 미설정</span>
     </div>
-    <button class="clear-btn" onclick="clearChat()">대화 초기화</button>
-    <button class="api-status" id="apiStatus" onclick="showApiModal()">⚙️ API 설정</button>
+    <button class="hdr-btn" onclick="clearChat()">대화 초기화</button>
+    <button class="hdr-btn" id="apiStatus" onclick="showApiModal()">⚙️ API 설정</button>
   </div>
 </header>
 
-<div class="main">
-  <!-- 사이드바: 빠른 질문 -->
-  <div class="sidebar">
-    <div class="sidebar-title">빠른 질문</div>
+<div class="workspace">
 
-    <button class="preset-btn" onclick="sendPreset(this)">
-      섹션 배너 만들기
-      <div class="label">치과 홈페이지용 히어로 배너 HTML/CSS</div>
-    </button>
+  <!-- ── 왼쪽: 채팅 ── -->
+  <div class="chat-panel" id="chatPanel">
 
-    <button class="preset-btn" onclick="sendPreset(this)">
-      진료 안내 카드
-      <div class="label">진료과목 카드형 UI 코드</div>
-    </button>
+    <!-- 빠른 질문 칩 -->
+    <div class="preset-bar">
+      <button class="preset-chip" onclick="sendPreset('섹션 배너 만들기')">배너</button>
+      <button class="preset-chip" onclick="sendPreset('진료 안내 카드 UI 코드 만들기')">진료카드</button>
+      <button class="preset-chip" onclick="sendPreset('온라인 예약 신청 폼 HTML 만들기')">예약폼</button>
+      <button class="preset-chip" onclick="sendPreset('의료진 소개 카드 레이아웃 만들기')">의료진</button>
+      <button class="preset-chip" onclick="sendPreset('반응형 상단 네비게이션 메뉴 만들기')">네비</button>
+      <button class="preset-chip" onclick="sendPreset('오시는 길 + 지도 섹션 만들기')">오시는 길</button>
+      <button class="preset-chip" onclick="sendPreset('공지사항 팝업 모달 만들기')">팝업</button>
+      <button class="preset-chip" onclick="sendPreset('코드 오류 수정해줘')">오류수정</button>
+      <button class="preset-chip" onclick="sendPreset('모바일 반응형 처리 방법 알려줘')">모바일</button>
+    </div>
 
-    <button class="preset-btn" onclick="sendPreset(this)">
-      예약 폼 만들기
-      <div class="label">온라인 예약 신청 폼 HTML</div>
-    </button>
-
-    <button class="preset-btn" onclick="sendPreset(this)">
-      의료진 소개 섹션
-      <div class="label">의사 프로필 카드 레이아웃</div>
-    </button>
-
-    <button class="preset-btn" onclick="sendPreset(this)">
-      네비게이션 메뉴
-      <div class="label">반응형 상단 메뉴 바 코드</div>
-    </button>
-
-    <button class="preset-btn" onclick="sendPreset(this)">
-      오시는 길 섹션
-      <div class="label">지도 + 교통편 안내 레이아웃</div>
-    </button>
-
-    <button class="preset-btn" onclick="sendPreset(this)">
-      팝업/모달 창
-      <div class="label">공지사항 팝업 또는 모달 코드</div>
-    </button>
-
-    <button class="preset-btn" onclick="sendPreset(this)">
-      색상/폰트 변경
-      <div class="label">기존 코드의 디자인 수정 방법</div>
-    </button>
-
-    <button class="preset-btn" onclick="sendPreset(this)">
-      모바일 대응
-      <div class="label">반응형 처리 방법 (미디어쿼리)</div>
-    </button>
-
-    <button class="preset-btn" onclick="sendPreset(this)">
-      코드 오류 수정
-      <div class="label">붙여넣기한 코드의 오류 찾기</div>
-    </button>
-  </div>
-
-  <!-- 채팅 영역 -->
-  <div class="chat-area">
+    <!-- 메시지 목록 -->
     <div class="messages" id="messages">
       <div class="welcome" id="welcome">
         <div class="emoji">🦷</div>
-        <h2>안녕하세요! 치과 홈페이지 코드 도우미입니다</h2>
-        <p>왼쪽 빠른 질문 버튼을 누르거나<br>아래에 직접 질문을 입력해주세요.<br><br>
-        코드 수정, 새 섹션 만들기, 오류 해결 등 무엇이든 도와드려요!</p>
+        <h2>치과 홈페이지 AI 코드 도우미</h2>
+        <p>아래에 질문하거나,<br>오른쪽에 이미지를 올리고 직접 표시해서<br>수정 요청해보세요!</p>
       </div>
     </div>
 
+    <!-- 입력창 -->
     <div class="input-area">
-      <div class="image-preview-wrap" id="imagePreviewWrap">
-        <img id="imagePreview" src="" alt="첨부 이미지">
-        <button class="img-remove" onclick="removeImage()">✕ 이미지 제거</button>
-      </div>
       <div class="input-row">
-        <button class="img-btn" id="imgBtn" onclick="document.getElementById('imageInput').click()" title="이미지 첨부">🖼️</button>
-        <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageSelect(event)">
         <textarea
           id="userInput"
-          placeholder="질문을 입력하세요... 이미지를 첨부하거나 Ctrl+V로 붙여넣기 해보세요!"
+          placeholder="질문을 입력하거나, 오른쪽 이미지에 그림을 그린 후 전송하세요"
           rows="1"
           onkeydown="handleKey(event)"
           oninput="autoResize(this)"
-          onpaste="handlePaste(event)"
+          onpaste="handleTextareaPaste(event)"
         ></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
       </div>
-      <div class="hint">Enter로 전송 · Shift+Enter로 줄바꿈 · 🖼️ 이미지 첨부 가능</div>
+      <div class="input-hint">Enter 전송 · Shift+Enter 줄바꿈 · Ctrl+V 이미지 붙여넣기</div>
+    </div>
+  </div>
+
+  <!-- 리사이저 -->
+  <div class="resizer" id="resizer"></div>
+
+  <!-- ── 오른쪽: 캔버스 패널 ── -->
+  <div class="canvas-panel">
+
+    <!-- 툴바 -->
+    <div class="canvas-toolbar">
+      <div class="toolbar-group">
+        <button class="tool-btn active" id="tool-pen"     onclick="setTool('pen')"     title="펜">✏️</button>
+        <button class="tool-btn"        id="tool-arrow"   onclick="setTool('arrow')"   title="화살표">➡️</button>
+        <button class="tool-btn"        id="tool-rect"    onclick="setTool('rect')"    title="사각형">⬜</button>
+        <button class="tool-btn"        id="tool-circle"  onclick="setTool('circle')"  title="원">⭕</button>
+        <button class="tool-btn"        id="tool-text"    onclick="setTool('text')"    title="텍스트">🅣</button>
+        <button class="tool-btn"        id="tool-eraser"  onclick="setTool('eraser')"  title="지우개">🧹</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <div class="color-btn active" style="background:#ef4444" onclick="setColor('#ef4444', this)" title="빨강"></div>
+        <div class="color-btn" style="background:#3b82f6" onclick="setColor('#3b82f6', this)" title="파랑"></div>
+        <div class="color-btn" style="background:#22c55e" onclick="setColor('#22c55e', this)" title="초록"></div>
+        <div class="color-btn" style="background:#f59e0b" onclick="setColor('#f59e0b', this)" title="노랑"></div>
+        <div class="color-btn" style="background:#ffffff" onclick="setColor('#ffffff', this)" title="흰색"></div>
+        <input type="color" class="custom-color" id="customColor" value="#ef4444" oninput="setColor(this.value, null)" title="색상 선택">
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <input type="range" class="size-slider" id="brushSize" min="1" max="20" value="3" title="굵기">
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <button class="action-btn btn-clear" onclick="clearDrawing()" title="그림만 지우기">그림 지우기</button>
+        <button class="action-btn btn-clear" onclick="clearAll()" title="이미지+그림 모두 지우기">전체 지우기</button>
+      </div>
+      <span class="canvas-area-label" id="canvasLabel">이미지를 올려주세요</span>
+    </div>
+
+    <!-- 드롭존 + 캔버스 -->
+    <div class="canvas-drop-zone" id="dropZone"
+      ondragover="onDragOver(event)"
+      ondragleave="onDragLeave(event)"
+      ondrop="onDrop(event)"
+      onclick="onDropZoneClick(event)">
+
+      <div class="canvas-placeholder" id="placeholder">
+        <div class="ph-icon">🖼️</div>
+        <h3>이미지를 올려주세요</h3>
+        <p>
+          드래그 앤 드롭<br>
+          클릭해서 파일 선택<br>
+          <kbd>Ctrl+V</kbd> 붙여넣기<br><br>
+          올린 후 화살표·원·텍스트로<br>수정 지시를 표시해 전송하세요
+        </p>
+      </div>
+
+      <canvas id="bgCanvas"></canvas>
+      <canvas id="drawCanvas"></canvas>
+      <input type="file" id="canvasFileInput" accept="image/*" style="display:none" onchange="loadImageFile(event)">
+    </div>
+
+    <!-- 캔버스 전송 입력 -->
+    <div class="canvas-input-row">
+      <input type="text" id="canvasPrompt"
+        placeholder="표시한 내용 설명 (예: 빨간 화살표 위치로 버튼 이동, 파란 원 부분 너비 늘려줘)"
+        onkeydown="if(event.key==='Enter') sendCanvasMessage()">
+      <button class="action-btn btn-send-canvas" id="canvasSendBtn" onclick="sendCanvasMessage()" disabled>
+        📤 AI에 전송
+      </button>
     </div>
   </div>
 </div>
@@ -622,25 +430,19 @@
 <div class="modal-overlay" id="apiModal">
   <div class="modal">
     <h2>🔑 API 설정</h2>
-    <p>MiniMax API 키를 입력하면 AI 코드 도우미를 사용할 수 있습니다.<br>키는 이 브라우저에만 저장되고 외부로 전송되지 않습니다.</p>
-
+    <p>MiniMax API 키를 입력하면 AI 코드 도우미를 사용할 수 있습니다.</p>
     <div class="api-guide">
-      📌 API 키 발급: <a href="https://www.minimaxi.com/user-center/basic-information/interface-key" target="_blank">MiniMax 콘솔</a>에서 발급받으세요.<br>
-      무료 크레딧이 제공되며 별도 결제 없이 시작 가능합니다.
+      📌 API 키 발급: <a href="https://www.minimaxi.com/user-center/basic-information/interface-key" target="_blank">MiniMax 콘솔</a>에서 발급받으세요.
     </div>
-
     <label>API Key</label>
-    <input type="password" id="apiKeyInput" placeholder="eyJhbGci..." />
-
+    <input type="password" id="apiKeyInput" placeholder="sk-cp-..." />
     <label>모델 선택</label>
     <select class="model-select" id="modelSelect">
       <option value="MiniMax-M2.7">MiniMax M2.7 (최신, 권장)</option>
       <option value="MiniMax-M2">MiniMax M2</option>
       <option value="MiniMax-Text-01">MiniMax Text-01</option>
       <option value="abab6.5s-chat">ABAB 6.5s (빠름)</option>
-      <option value="abab6.5-chat">ABAB 6.5</option>
     </select>
-
     <div class="modal-btns">
       <button class="btn-cancel" onclick="hideApiModal()">취소</button>
       <button class="btn-save" onclick="saveApiKey()">저장</button>
@@ -649,136 +451,103 @@
 </div>
 
 <script>
-// ── 상태 ──────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════
+//  상태
+// ════════════════════════════════════════════
 const BUILT_IN_KEY = 'sk-cp-s7bMaFefz6EArcYTLXDmQl9-PLJdHqML71JuKQf2HFIMs-pSrKLjZSpKrchVwamE_FnIl1F7IUbdc0GVvHsKohTgXRGKqlgOTI8DKT0nU6fMSpm_O2EY274';
-let apiKey = localStorage.getItem('minimax_api_key') || BUILT_IN_KEY;
+let apiKey       = localStorage.getItem('minimax_api_key') || BUILT_IN_KEY;
 let selectedModel = localStorage.getItem('minimax_model') || 'MiniMax-M2.7';
-let isLoading = false;
+let isLoading    = false;
 let conversationHistory = JSON.parse(localStorage.getItem('chat_history') || '[]');
-let pendingImageBase64 = null;
-let pendingImageMime = null;
 
-// 시스템 프롬프트
+// 채팅 이미지 첨부 (textarea paste)
+let chatImageBase64 = null;
+let chatImageMime   = null;
+
 const SYSTEM_PROMPT = `당신은 치과 홈페이지 제작을 도와주는 친절한 웹 개발 전문가입니다.
 
 역할:
 - 비개발자 직원이 치과 홈페이지를 만들 수 있도록 쉽게 설명합니다
 - HTML, CSS, JavaScript 코드를 작성하고 설명해 줍니다
+- 이미지나 화살표·메모가 표시된 이미지를 보고 정확하게 수정 사항을 파악하여 코드를 작성합니다
 - 기존 코드의 오류를 찾고 수정합니다
-- 복잡한 개념은 쉬운 말로 풀어서 설명합니다
 
 코드 작성 원칙:
 - 완성도 높은 실제 사용 가능한 코드를 제공합니다
-- 주석을 충분히 달아 비개발자도 이해하기 쉽게 합니다
+- 주석을 달아 비개발자도 이해하기 쉽게 합니다
 - 치과 홈페이지에 어울리는 전문적이고 신뢰감 있는 디자인을 추천합니다
 - 모바일 반응형을 기본으로 고려합니다
 
 응답 방식:
 - 친근하고 쉬운 한국어로 답변합니다
-- 코드를 제공할 때는 어디에 붙여넣으면 되는지 설명합니다
-- 단계별로 설명이 필요한 경우 번호를 매겨 안내합니다`;
+- 코드를 제공할 때는 어디에 붙여넣으면 되는지 설명합니다`;
 
-// ── 초기화 ─────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════
+//  초기화
+// ════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   updateApiStatus();
-  if (!apiKey) {
-    setTimeout(showApiModal, 500);
-  } else {
-    testApiConnection();
-  }
+  if (!apiKey) setTimeout(showApiModal, 500);
+  else testApiConnection();
   document.getElementById('apiKeyInput').value = apiKey;
   document.getElementById('modelSelect').value = selectedModel;
   loadHistory();
+  initCanvas();
+  initResizer();
+  // 전역 paste (캔버스 패널에서도 붙여넣기)
+  document.addEventListener('paste', onGlobalPaste);
 });
 
-// ── API 상태 표시 ──────────────────────────────────────────────────────────
+// ════════════════════════════════════════════
+//  API 상태
+// ════════════════════════════════════════════
 function updateApiStatus() {
   const btn = document.getElementById('apiStatus');
-  if (apiKey) {
-    btn.textContent = '⚙️ API 설정';
-    btn.classList.add('connected');
-  } else {
-    btn.textContent = '⚙️ API 설정';
-    btn.classList.remove('connected');
-  }
+  btn.classList.toggle('connected', !!apiKey);
 }
 
 function setConnBadge(state, text) {
-  const badge = document.getElementById('connBadge');
-  const label = document.getElementById('connText');
-  badge.className = 'conn-badge ' + state;
-  label.textContent = text;
+  document.getElementById('connBadge').className = 'conn-badge ' + state;
+  document.getElementById('connText').textContent = text;
 }
 
 async function testApiConnection() {
-  if (!apiKey) {
-    setConnBadge('none', 'API 미설정');
-    return;
-  }
-  setConnBadge('checking', '연결 확인 중...');
+  if (!apiKey) { setConnBadge('none','API 미설정'); return; }
+  setConnBadge('checking','연결 확인 중...');
   try {
     const res = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages: [
-          { role: 'system', content: '한 단어로만 답하세요.' },
-          { role: 'user', content: '안녕' }
-        ],
-        max_tokens: 10
-      })
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
+      body: JSON.stringify({ model: selectedModel, messages:[{role:'system',content:'한 단어만.'},{role:'user',content:'안녕'}], max_tokens:5 })
     });
-    if (res.ok) {
-      setConnBadge('ok', 'MiniMax 연결됨');
-    } else {
-      const err = await res.json().catch(() => ({}));
-      const msg = err?.error?.message || err?.base_resp?.status_msg || `오류 ${res.status}`;
-      setConnBadge('fail', '연결 실패: ' + msg.slice(0, 20));
-    }
-  } catch (e) {
-    setConnBadge('fail', '네트워크 오류');
-  }
+    if (res.ok) setConnBadge('ok','MiniMax 연결됨');
+    else { const e=await res.json().catch(()=>({})); setConnBadge('fail','오류: '+(e?.error?.message||res.status).toString().slice(0,18)); }
+  } catch { setConnBadge('fail','네트워크 오류'); }
 }
 
-// ── 모달 ───────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════
+//  모달
+// ════════════════════════════════════════════
 function showApiModal() {
   document.getElementById('apiKeyInput').value = apiKey;
   document.getElementById('modelSelect').value = selectedModel;
   document.getElementById('apiModal').classList.add('show');
 }
-
-function hideApiModal() {
-  document.getElementById('apiModal').classList.remove('show');
-}
-
+function hideApiModal() { document.getElementById('apiModal').classList.remove('show'); }
 function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
-  const model = document.getElementById('modelSelect').value;
-  if (!key) {
-    alert('API 키를 입력해주세요.');
-    return;
-  }
-  apiKey = key;
-  selectedModel = model;
+  if (!key) { alert('API 키를 입력해주세요.'); return; }
+  apiKey = key; selectedModel = document.getElementById('modelSelect').value;
   localStorage.setItem('minimax_api_key', key);
-  localStorage.setItem('minimax_model', model);
-  updateApiStatus();
-  hideApiModal();
-  testApiConnection();
+  localStorage.setItem('minimax_model', selectedModel);
+  updateApiStatus(); hideApiModal(); testApiConnection();
 }
+document.addEventListener('click', e => { if (e.target.id==='apiModal') hideApiModal(); });
 
-document.getElementById('apiModal').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('apiModal')) hideApiModal();
-});
-
-// ── 채팅 ───────────────────────────────────────────────────────────────────
-function saveHistory() {
-  localStorage.setItem('chat_history', JSON.stringify(conversationHistory));
-}
+// ════════════════════════════════════════════
+//  채팅
+// ════════════════════════════════════════════
+function saveHistory() { localStorage.setItem('chat_history', JSON.stringify(conversationHistory)); }
 
 function clearChat() {
   conversationHistory = [];
@@ -786,297 +555,539 @@ function clearChat() {
   document.getElementById('messages').innerHTML = `
     <div class="welcome" id="welcome">
       <div class="emoji">🦷</div>
-      <h2>안녕하세요! 치과 홈페이지 코드 도우미입니다</h2>
-      <p>왼쪽 빠른 질문 버튼을 누르거나<br>아래에 직접 질문을 입력해주세요.<br><br>
-      코드 수정, 새 섹션 만들기, 오류 해결 등 무엇이든 도와드려요!</p>
+      <h2>치과 홈페이지 AI 코드 도우미</h2>
+      <p>아래에 질문하거나,<br>오른쪽에 이미지를 올리고 직접 표시해서<br>수정 요청해보세요!</p>
     </div>`;
 }
 
 function loadHistory() {
-  if (conversationHistory.length === 0) return;
-  const welcome = document.getElementById('welcome');
-  if (welcome) welcome.remove();
-  conversationHistory.forEach(msg => appendMessage(msg.role, msg.content));
+  if (!conversationHistory.length) return;
+  document.getElementById('welcome')?.remove();
+  conversationHistory.forEach(msg => {
+    if (typeof msg.content === 'string') appendMessage(msg.role, msg.content);
+    else if (Array.isArray(msg.content)) {
+      const imgPart = msg.content.find(p=>p.type==='image_url');
+      const txtPart = msg.content.find(p=>p.type==='text');
+      appendMessageWithImage(msg.role, txtPart?.text||'', imgPart?.image_url?.url||null);
+    }
+  });
 }
 
-function sendPreset(btn) {
-  const text = btn.firstChild.textContent.trim();
+function sendPreset(text) {
   document.getElementById('userInput').value = text;
   sendMessage();
 }
 
 function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
 
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
-}
-
-// ── 이미지 처리 ────────────────────────────────────────────────────────────
-function setImageFromFile(file) {
-  if (!file || !file.type.startsWith('image/')) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    pendingImageMime = file.type;
-    pendingImageBase64 = dataUrl.split(',')[1];
-    document.getElementById('imagePreview').src = dataUrl;
-    document.getElementById('imagePreviewWrap').classList.add('show');
-    document.getElementById('imgBtn').classList.add('has-image');
-    if (!document.getElementById('userInput').value.trim()) {
-      document.getElementById('userInput').placeholder = '이 이미지로 무엇을 만들까요? (예: 이 디자인으로 웹 섹션 만들어줘)';
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function handleImageSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  setImageFromFile(file);
-  event.target.value = '';
-}
-
-function handlePaste(event) {
-  const items = event.clipboardData && event.clipboardData.items;
+// textarea 붙여넣기 → 이미지면 채팅 이미지로 등록
+function handleTextareaPaste(e) {
+  const items = e.clipboardData?.items;
   if (!items) return;
   for (const item of items) {
     if (item.type.startsWith('image/')) {
-      event.preventDefault();
+      e.preventDefault();
       const file = item.getAsFile();
-      setImageFromFile(file);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        chatImageBase64 = ev.target.result.split(',')[1];
+        chatImageMime   = file.type;
+        // 채팅 입력창 아래 미리보기
+        showChatImagePreview(ev.target.result);
+      };
+      reader.readAsDataURL(file);
       return;
     }
   }
 }
 
-function removeImage() {
-  pendingImageBase64 = null;
-  pendingImageMime = null;
-  document.getElementById('imagePreviewWrap').classList.remove('show');
-  document.getElementById('imgBtn').classList.remove('has-image');
-  document.getElementById('userInput').placeholder = '질문을 입력하세요... 이미지를 첨부하고 \'이렇게 만들어줘\'라고 해보세요!';
+let chatPreviewEl = null;
+function showChatImagePreview(src) {
+  if (chatPreviewEl) chatPreviewEl.remove();
+  chatPreviewEl = document.createElement('div');
+  chatPreviewEl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 12px;background:#f0f9ff;border-top:1px solid #bae6fd;';
+  chatPreviewEl.innerHTML = `<img src="${src}" style="height:50px;border-radius:6px;border:1px solid #e2e8f0">
+    <span style="font-size:12px;color:#0369a1">이미지 첨부됨</span>
+    <button onclick="removeChatImage()" style="margin-left:auto;background:#fee2e2;color:#dc2626;border:none;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">✕</button>`;
+  document.querySelector('.input-area').insertBefore(chatPreviewEl, document.querySelector('.input-row'));
+}
+function removeChatImage() {
+  chatImageBase64 = null; chatImageMime = null;
+  chatPreviewEl?.remove(); chatPreviewEl = null;
 }
 
 async function sendMessage() {
   const input = document.getElementById('userInput');
-  const text = input.value.trim();
-  if ((!text && !pendingImageBase64) || isLoading) return;
+  const text  = input.value.trim();
+  if ((!text && !chatImageBase64) || isLoading) return;
+  if (!apiKey) { showApiModal(); return; }
 
-  if (!apiKey) {
-    showApiModal();
-    return;
-  }
+  document.getElementById('welcome')?.remove();
 
-  const welcome = document.getElementById('welcome');
-  if (welcome) welcome.remove();
+  const hasImg = !!chatImageBase64;
+  appendMessageWithImage('user', text, hasImg ? `data:${chatImageMime};base64,${chatImageBase64}` : null);
 
-  const hasImage = !!pendingImageBase64;
-  const displayText = text || '(이미지 첨부)';
+  let userContent = hasImg
+    ? [ { type:'image_url', image_url:{ url:`data:${chatImageMime};base64,${chatImageBase64}` } },
+        { type:'text', text: text||'이 이미지를 참고해서 치과 홈페이지에 어울리는 HTML/CSS 코드를 만들어줘.' } ]
+    : text;
 
-  // 사용자 메시지 표시
-  appendMessageWithImage('user', displayText, hasImage ? document.getElementById('imagePreview').src : null);
+  input.value = ''; input.style.height='auto';
+  removeChatImage();
 
-  // 히스토리용 메시지 구성
-  let userContent;
-  if (hasImage) {
-    userContent = [
-      { type: 'image_url', image_url: { url: `data:${pendingImageMime};base64,${pendingImageBase64}` } },
-      { type: 'text', text: text || '이 이미지를 참고해서 치과 홈페이지에 어울리는 HTML/CSS 코드를 만들어줘.' }
-    ];
-  } else {
-    userContent = text;
-  }
-
-  input.value = '';
-  input.style.height = 'auto';
-  removeImage();
-
-  conversationHistory.push({ role: 'user', content: userContent });
+  conversationHistory.push({ role:'user', content:userContent });
   saveHistory();
 
+  await doAiCall();
+}
+
+async function doAiCall() {
   const loadingId = appendLoading();
   isLoading = true;
   document.getElementById('sendBtn').disabled = true;
-
+  document.getElementById('canvasSendBtn').disabled = true;
   try {
     const reply = await callMiniMax(conversationHistory);
     removeLoading(loadingId);
     appendMessage('assistant', reply);
-    conversationHistory.push({ role: 'assistant', content: reply });
+    conversationHistory.push({ role:'assistant', content:reply });
     saveHistory();
-  } catch (err) {
+  } catch(err) {
     removeLoading(loadingId);
     appendError(err.message);
   } finally {
     isLoading = false;
     document.getElementById('sendBtn').disabled = false;
-    input.focus();
+    updateCanvasSendBtn();
   }
 }
 
-// ── MiniMax API 호출 ────────────────────────────────────────────────────────
+// ════════════════════════════════════════════
+//  MiniMax API
+// ════════════════════════════════════════════
 async function callMiniMax(history) {
-  const response = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
+  const res = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
     body: JSON.stringify({
       model: selectedModel,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...history
-      ],
-      max_tokens: 4096,
-      temperature: 0.3,
-      top_p: 0.9
+      messages: [{ role:'system', content:SYSTEM_PROMPT }, ...history],
+      max_tokens: 4096, temperature: 0.3, top_p: 0.9
     })
   });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    const msg = err?.error?.message || err?.base_resp?.status_msg || `HTTP ${response.status}`;
-    throw new Error(`API 오류: ${msg}`);
+  if (!res.ok) {
+    const e=await res.json().catch(()=>({}));
+    throw new Error('API 오류: '+(e?.error?.message||e?.base_resp?.status_msg||`HTTP ${res.status}`));
   }
-
-  const data = await response.json();
-
-  // MiniMax 응답 형식 처리
-  const content = data?.choices?.[0]?.message?.content
-    ?? data?.choices?.[0]?.messages?.[0]?.text
-    ?? data?.reply
-    ?? '';
-
-  if (!content) throw new Error('응답을 받지 못했습니다. API 키 또는 모델을 확인해주세요.');
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content ?? data?.choices?.[0]?.messages?.[0]?.text ?? data?.reply ?? '';
+  if (!content) throw new Error('응답을 받지 못했습니다.');
   return content;
 }
 
-// ── 렌더링 ─────────────────────────────────────────────────────────────────
-function appendMessageWithImage(role, text, imageSrc) {
-  const messages = document.getElementById('messages');
-  const div = document.createElement('div');
+// ════════════════════════════════════════════
+//  렌더링
+// ════════════════════════════════════════════
+function appendMessageWithImage(role, text, imgSrc) {
+  const wrap = document.getElementById('messages');
+  const div  = document.createElement('div');
   div.className = `msg ${role}`;
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar';
-  avatar.textContent = '👤';
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  if (imageSrc) {
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = role==='user' ? '👤' : '🤖';
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  if (imgSrc) {
     const img = document.createElement('img');
-    img.src = imageSrc;
-    img.className = 'msg-image';
-    bubble.appendChild(img);
+    img.src = imgSrc; img.className = 'msg-image';
+    bub.appendChild(img);
   }
-  if (text && text !== '(이미지 첨부)') {
-    const p = document.createElement('p');
-    p.style.margin = '0';
-    p.textContent = text;
-    bubble.appendChild(p);
+  if (text) {
+    const p = document.createElement('p'); p.style.margin='0'; p.textContent = text;
+    bub.appendChild(p);
   }
-  div.appendChild(avatar);
-  div.appendChild(bubble);
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+  div.appendChild(av); div.appendChild(bub);
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
 }
 
 function appendMessage(role, content) {
-  const messages = document.getElementById('messages');
-  const div = document.createElement('div');
+  const wrap = document.getElementById('messages');
+  const div  = document.createElement('div');
   div.className = `msg ${role}`;
-
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar';
-  avatar.textContent = role === 'user' ? '👤' : '🤖';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-
-  if (role === 'assistant') {
-    bubble.innerHTML = renderMarkdown(content);
-    // 코드 블록에 복사 버튼 추가
-    bubble.querySelectorAll('pre code').forEach(block => {
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = role==='user' ? '👤' : '🤖';
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  if (role==='assistant') {
+    marked.setOptions({ breaks:true, gfm:true });
+    bub.innerHTML = marked.parse(content);
+    bub.querySelectorAll('pre code').forEach(block => {
       hljs.highlightElement(block);
       const wrapper = document.createElement('div');
       wrapper.className = 'code-wrapper';
-      const header = document.createElement('div');
-      header.className = 'code-header';
-      const lang = block.className.replace('language-', '').replace('hljs', '').trim() || 'code';
-      header.innerHTML = `<span>${lang}</span>`;
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'copy-btn';
-      copyBtn.textContent = '복사';
-      copyBtn.onclick = () => copyCode(block.textContent, copyBtn);
-      header.appendChild(copyBtn);
+      const hdr = document.createElement('div');
+      hdr.className = 'code-header';
+      const lang = block.className.replace('language-','').replace('hljs','').trim()||'code';
+      hdr.innerHTML = `<span>${lang}</span>`;
+      const cb = document.createElement('button');
+      cb.className='copy-btn'; cb.textContent='복사';
+      cb.onclick = () => copyCode(block.textContent, cb);
+      hdr.appendChild(cb);
       const pre = block.parentElement;
-      wrapper.appendChild(header);
+      wrapper.appendChild(hdr);
       wrapper.appendChild(pre.cloneNode(true));
       pre.replaceWith(wrapper);
     });
   } else {
-    bubble.textContent = content;
+    if (typeof content === 'string') bub.textContent = content;
   }
-
-  div.appendChild(avatar);
-  div.appendChild(bubble);
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-}
-
-function renderMarkdown(text) {
-  marked.setOptions({
-    breaks: true,
-    gfm: true,
-    highlight: false // hljs 로 별도 처리
-  });
-  return marked.parse(text);
+  div.appendChild(av); div.appendChild(bub);
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
 }
 
 function appendLoading() {
-  const messages = document.getElementById('messages');
-  const id = 'loading-' + Date.now();
+  const wrap = document.getElementById('messages');
+  const id = 'ld-'+Date.now();
   const div = document.createElement('div');
-  div.className = 'msg assistant';
-  div.id = id;
-  div.innerHTML = `
-    <div class="avatar">🤖</div>
-    <div class="bubble">
-      <div class="loading-dots">
-        <span></span><span></span><span></span>
-      </div>
-    </div>`;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+  div.className='msg assistant'; div.id=id;
+  div.innerHTML='<div class="avatar">🤖</div><div class="bubble"><div class="loading-dots"><span></span><span></span><span></span></div></div>';
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight;
   return id;
 }
-
-function removeLoading(id) {
-  document.getElementById(id)?.remove();
-}
-
+function removeLoading(id) { document.getElementById(id)?.remove(); }
 function appendError(msg) {
-  const messages = document.getElementById('messages');
-  const div = document.createElement('div');
-  div.className = 'error-msg';
-  div.textContent = '⚠️ ' + msg;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+  const wrap=document.getElementById('messages');
+  const div=document.createElement('div'); div.className='error-msg'; div.textContent='⚠️ '+msg;
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight;
+}
+function copyCode(text, btn) {
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✓ 복사됨'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='복사'; btn.classList.remove('copied'); }, 2000);
+  });
 }
 
-function copyCode(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✓ 복사됨';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '복사';
-      btn.classList.remove('copied');
-    }, 2000);
+// ════════════════════════════════════════════
+//  캔버스 드로잉
+// ════════════════════════════════════════════
+let bgCtx, drawCtx;
+let bgCanvas, drawCanvas;
+let currentTool  = 'pen';
+let currentColor = '#ef4444';
+let brushSize    = 3;
+let isDrawing    = false;
+let lastX=0, lastY=0;
+let startX=0, startY=0;
+let snapshot = null; // 도형 그리기용 스냅샷
+let bgImageLoaded = false;
+let textInputActive = false;
+
+function initCanvas() {
+  bgCanvas   = document.getElementById('bgCanvas');
+  drawCanvas = document.getElementById('drawCanvas');
+  bgCtx      = bgCanvas.getContext('2d');
+  drawCtx    = drawCanvas.getContext('2d');
+
+  resizeCanvases();
+  new ResizeObserver(resizeCanvases).observe(document.getElementById('dropZone'));
+
+  // 마우스
+  drawCanvas.addEventListener('mousedown',  onDrawStart);
+  drawCanvas.addEventListener('mousemove',  onDrawMove);
+  drawCanvas.addEventListener('mouseup',    onDrawEnd);
+  drawCanvas.addEventListener('mouseleave', onDrawEnd);
+  // 터치
+  drawCanvas.addEventListener('touchstart', e=>{ e.preventDefault(); onDrawStart(e.touches[0]); }, {passive:false});
+  drawCanvas.addEventListener('touchmove',  e=>{ e.preventDefault(); onDrawMove(e.touches[0]); }, {passive:false});
+  drawCanvas.addEventListener('touchend',   e=>{ e.preventDefault(); onDrawEnd(); }, {passive:false});
+}
+
+function resizeCanvases() {
+  const zone = document.getElementById('dropZone');
+  const w = zone.clientWidth, h = zone.clientHeight;
+  if (!w||!h) return;
+  // 배경 캔버스 리사이즈 (이미지 다시 그리기)
+  const imgData = bgImageLoaded ? bgCtx.getImageData(0,0,bgCanvas.width,bgCanvas.height) : null;
+  bgCanvas.width   = w; bgCanvas.height   = h;
+  drawCanvas.width = w; drawCanvas.height = h;
+  bgCanvas.style.width   = w+'px'; bgCanvas.style.height   = h+'px';
+  drawCanvas.style.width = w+'px'; drawCanvas.style.height = h+'px';
+  // 이미지 다시 그리기
+  if (loadedImage) drawBgImage();
+}
+
+let loadedImage = null;
+function drawBgImage() {
+  if (!loadedImage) return;
+  bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  const cw=bgCanvas.width, ch=bgCanvas.height;
+  const iw=loadedImage.width, ih=loadedImage.height;
+  const scale = Math.min(cw/iw, ch/ih, 1);
+  const dw=iw*scale, dh=ih*scale;
+  const dx=(cw-dw)/2, dy=(ch-dh)/2;
+  bgCtx.drawImage(loadedImage, dx, dy, dw, dh);
+}
+
+function loadImageToCanvas(src) {
+  const img = new Image();
+  img.onload = () => {
+    loadedImage = img;
+    bgImageLoaded = true;
+    drawBgImage();
+    drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('canvasLabel').textContent = '이미지 로드 완료 — 표시 후 전송하세요';
+    updateCanvasSendBtn();
+  };
+  img.src = src;
+}
+
+function updateCanvasSendBtn() {
+  document.getElementById('canvasSendBtn').disabled = !bgImageLoaded || isLoading;
+}
+
+// 파일 선택
+function loadImageFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => loadImageToCanvas(ev.target.result);
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+
+function onDropZoneClick(e) {
+  if (bgImageLoaded) return; // 이미지 있으면 그리기 모드
+  if (e.target===document.getElementById('dropZone') || e.target===document.getElementById('placeholder') || e.target.closest('#placeholder')) {
+    document.getElementById('canvasFileInput').click();
+  }
+}
+
+// 드래그 앤 드롭
+function onDragOver(e)  { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+function onDragLeave(e) { document.getElementById('dropZone').classList.remove('dragover'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = ev => loadImageToCanvas(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+}
+
+// 전역 붙여넣기
+function onGlobalPaste(e) {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      // textarea focus 중이 아니면 캔버스에 로드
+      if (document.activeElement.id !== 'userInput' && document.activeElement.id !== 'canvasPrompt') {
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = ev => loadImageToCanvas(ev.target.result);
+        reader.readAsDataURL(file);
+        return;
+      }
+    }
+  }
+}
+
+// ── 드로잉 이벤트 ──
+function getPos(e) {
+  const rect = drawCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function onDrawStart(e) {
+  if (!bgImageLoaded) return;
+  if (currentTool === 'text') { handleTextClick(e); return; }
+  const pos = getPos(e);
+  isDrawing = true;
+  lastX = startX = pos.x;
+  lastY = startY = pos.y;
+  if (['arrow','rect','circle'].includes(currentTool)) {
+    snapshot = drawCtx.getImageData(0,0,drawCanvas.width,drawCanvas.height);
+  }
+  if (currentTool === 'pen' || currentTool === 'eraser') {
+    drawCtx.beginPath();
+    drawCtx.moveTo(pos.x, pos.y);
+  }
+}
+
+function onDrawMove(e) {
+  if (!isDrawing) return;
+  const pos = getPos(e);
+  drawCtx.lineWidth   = brushSize;
+  drawCtx.lineCap     = 'round';
+  drawCtx.lineJoin    = 'round';
+  drawCtx.strokeStyle = currentTool==='eraser' ? 'rgba(0,0,0,0)' : currentColor;
+
+  if (currentTool === 'pen') {
+    drawCtx.lineTo(pos.x, pos.y);
+    drawCtx.stroke();
+    lastX=pos.x; lastY=pos.y;
+  } else if (currentTool === 'eraser') {
+    drawCtx.globalCompositeOperation = 'destination-out';
+    drawCtx.lineWidth = brushSize * 4;
+    drawCtx.lineTo(pos.x, pos.y);
+    drawCtx.stroke();
+    drawCtx.globalCompositeOperation = 'source-over';
+    lastX=pos.x; lastY=pos.y;
+  } else if (currentTool === 'arrow') {
+    drawCtx.putImageData(snapshot, 0, 0);
+    drawArrow(drawCtx, startX, startY, pos.x, pos.y, currentColor, brushSize);
+  } else if (currentTool === 'rect') {
+    drawCtx.putImageData(snapshot, 0, 0);
+    drawCtx.strokeStyle = currentColor;
+    drawCtx.strokeRect(startX, startY, pos.x-startX, pos.y-startY);
+  } else if (currentTool === 'circle') {
+    drawCtx.putImageData(snapshot, 0, 0);
+    drawCtx.beginPath();
+    drawCtx.ellipse(
+      (startX+pos.x)/2, (startY+pos.y)/2,
+      Math.abs(pos.x-startX)/2, Math.abs(pos.y-startY)/2,
+      0, 0, 2*Math.PI
+    );
+    drawCtx.strokeStyle = currentColor;
+    drawCtx.stroke();
+  }
+}
+
+function onDrawEnd() {
+  isDrawing = false;
+  drawCtx.beginPath();
+  if (currentTool === 'eraser') drawCtx.globalCompositeOperation = 'source-over';
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
+  const headLen = Math.max(10, lw * 4);
+  const angle   = Math.atan2(y2-y1, x2-x1);
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen*Math.cos(angle-Math.PI/6), y2 - headLen*Math.sin(angle-Math.PI/6));
+  ctx.lineTo(x2 - headLen*Math.cos(angle+Math.PI/6), y2 - headLen*Math.sin(angle+Math.PI/6));
+  ctx.closePath(); ctx.fill();
+}
+
+function handleTextClick(e) {
+  if (textInputActive) return;
+  const pos = getPos(e);
+  const inp = document.createElement('input');
+  inp.type  = 'text';
+  inp.style.cssText = `position:absolute;left:${pos.x}px;top:${pos.y-12}px;z-index:10;
+    background:rgba(0,0,0,0.6);color:${currentColor};border:1px solid ${currentColor};
+    border-radius:4px;padding:2px 6px;font-size:${Math.max(12,brushSize*2+8)}px;
+    font-weight:bold;outline:none;min-width:100px;`;
+  document.getElementById('dropZone').appendChild(inp);
+  inp.focus();
+  textInputActive = true;
+  inp.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') commitText(inp, pos);
+    if (ev.key === 'Escape') { inp.remove(); textInputActive=false; }
+  });
+  inp.addEventListener('blur', () => { if (inp.value.trim()) commitText(inp, pos); else { inp.remove(); textInputActive=false; } });
+}
+
+function commitText(inp, pos) {
+  const val = inp.value.trim();
+  inp.remove(); textInputActive=false;
+  if (!val) return;
+  const fs = parseInt(inp.style.fontSize);
+  drawCtx.font      = `bold ${fs}px Segoe UI,sans-serif`;
+  drawCtx.fillStyle = currentColor;
+  drawCtx.fillText(val, pos.x, pos.y+2);
+}
+
+// ── 도구 / 색상 / 크기 ──
+function setTool(tool) {
+  currentTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tool-'+tool).classList.add('active');
+  drawCanvas.style.cursor = tool==='eraser' ? 'cell' : (tool==='text' ? 'text' : 'crosshair');
+}
+function setColor(color, el) {
+  currentColor = color;
+  document.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('customColor').value = color;
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('brushSize').addEventListener('input', e => { brushSize = +e.target.value; });
+});
+
+function clearDrawing() { drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height); }
+function clearAll() {
+  bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  loadedImage=null; bgImageLoaded=false;
+  document.getElementById('placeholder').style.display='';
+  document.getElementById('canvasLabel').textContent='이미지를 올려주세요';
+  updateCanvasSendBtn();
+}
+
+// ── 캔버스 → AI 전송 ──
+async function sendCanvasMessage() {
+  if (!bgImageLoaded || isLoading) return;
+  const prompt = document.getElementById('canvasPrompt').value.trim()
+    || '이미지에 표시된 내용을 참고해서 치과 홈페이지 코드를 수정해줘.';
+
+  // 배경 + 드로잉 합성
+  const merged = document.createElement('canvas');
+  merged.width  = bgCanvas.width;
+  merged.height = bgCanvas.height;
+  const mCtx = merged.getContext('2d');
+  mCtx.drawImage(bgCanvas, 0, 0);
+  mCtx.drawImage(drawCanvas, 0, 0);
+  const dataUrl = merged.toDataURL('image/png');
+  const base64  = dataUrl.split(',')[1];
+
+  // 채팅에 이미지 + 텍스트 표시
+  document.getElementById('welcome')?.remove();
+  appendMessageWithImage('user', prompt, dataUrl);
+
+  const userContent = [
+    { type:'image_url', image_url:{ url:`data:image/png;base64,${base64}` } },
+    { type:'text', text: prompt }
+  ];
+  conversationHistory.push({ role:'user', content:userContent });
+  saveHistory();
+
+  document.getElementById('canvasPrompt').value = '';
+  await doAiCall();
+}
+
+// ════════════════════════════════════════════
+//  리사이저 (좌우 패널 드래그)
+// ════════════════════════════════════════════
+function initResizer() {
+  const resizer   = document.getElementById('resizer');
+  const chatPanel = document.getElementById('chatPanel');
+  let dragging = false, startX=0, startW=0;
+  resizer.addEventListener('mousedown', e => {
+    dragging=true; startX=e.clientX; startW=chatPanel.offsetWidth;
+    document.body.style.cursor='col-resize';
+    document.body.style.userSelect='none';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = Math.max(260, Math.min(700, startW+(e.clientX-startX)));
+    chatPanel.style.width = w+'px';
+  });
+  document.addEventListener('mouseup', () => {
+    dragging=false;
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
   });
 }
 </script>
