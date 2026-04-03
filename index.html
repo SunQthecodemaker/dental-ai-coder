@@ -605,10 +605,11 @@
         <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageSelect(event)">
         <textarea
           id="userInput"
-          placeholder="질문을 입력하세요... 이미지를 첨부하고 '이렇게 만들어줘'라고 해보세요!"
+          placeholder="질문을 입력하세요... 이미지를 첨부하거나 Ctrl+V로 붙여넣기 해보세요!"
           rows="1"
           onkeydown="handleKey(event)"
           oninput="autoResize(this)"
+          onpaste="handlePaste(event)"
         ></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
       </div>
@@ -817,9 +818,8 @@ function autoResize(el) {
 }
 
 // ── 이미지 처리 ────────────────────────────────────────────────────────────
-function handleImageSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function setImageFromFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     const dataUrl = e.target.result;
@@ -833,7 +833,26 @@ function handleImageSelect(event) {
     }
   };
   reader.readAsDataURL(file);
+}
+
+function handleImageSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  setImageFromFile(file);
   event.target.value = '';
+}
+
+function handlePaste(event) {
+  const items = event.clipboardData && event.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      event.preventDefault();
+      const file = item.getAsFile();
+      setImageFromFile(file);
+      return;
+    }
+  }
 }
 
 function removeImage() {
