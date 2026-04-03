@@ -294,6 +294,90 @@ input[type=color].custom-color {
 .btn-save:hover { background: #1e40af; }
 .api-guide { background: #f8fafc; border-radius: 7px; padding: 10px; margin-bottom: 14px; font-size: 12px; color: #475569; line-height: 1.7; border: 1px solid #e2e8f0; }
 .api-guide a { color: #1a56db; }
+
+/* ── 패널 탭 ── */
+.panel-tabs {
+  display: flex; background: #0f172a; border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+.panel-tab {
+  padding: 9px 18px; font-size: 13px; font-weight: 500; cursor: pointer;
+  color: #64748b; border: none; background: none; border-bottom: 2px solid transparent;
+  transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+}
+.panel-tab:hover { color: #94a3b8; }
+.panel-tab.active { color: #e2e8f0; border-bottom-color: #1a56db; }
+
+/* ── 코드 에디터 패널 ── */
+.code-editor-panel {
+  display: none; flex-direction: column; flex: 1; overflow: hidden; background: #1e293b;
+}
+.code-editor-panel.active { display: flex; }
+
+.code-editor-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; background: #0f172a; border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+.code-lang-badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  background: #334155; color: #94a3b8; font-family: monospace;
+}
+.code-line-count { font-size: 11px; color: #475569; }
+.code-editor-toolbar .spacer { flex: 1; }
+.code-action-btn {
+  padding: 5px 14px; border-radius: 7px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; transition: all 0.15s;
+}
+.btn-copy-all { background: #1a56db; color: white; }
+.btn-copy-all:hover { background: #1e40af; }
+.btn-copy-all.copied { background: #065f46; color: #6ee7b7; }
+.btn-clear-editor { background: #374151; color: #9ca3af; }
+.btn-clear-editor:hover { background: #4b5563; color: white; }
+
+.code-editor-wrap {
+  flex: 1; display: flex; overflow: hidden; position: relative;
+}
+.line-numbers {
+  width: 42px; background: #0f172a; color: #475569;
+  font-family: 'Consolas','Courier New',monospace; font-size: 13px;
+  line-height: 1.6; padding: 14px 8px 14px 0; text-align: right;
+  overflow: hidden; flex-shrink: 0; user-select: none;
+  border-right: 1px solid #1e293b;
+}
+#codeEditor {
+  flex: 1; background: #1e293b; color: #e2e8f0;
+  font-family: 'Consolas','Courier New',monospace; font-size: 13px;
+  line-height: 1.6; padding: 14px; border: none; outline: none; resize: none;
+  overflow-y: auto; tab-size: 2; white-space: pre;
+}
+#codeEditor::placeholder { color: #334155; }
+
+.code-editor-bottom {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; background: #0f172a; border-top: 1px solid #334155; flex-shrink: 0;
+}
+.code-editor-bottom input {
+  flex: 1; padding: 7px 12px; background: #1e293b; border: 1px solid #334155;
+  border-radius: 8px; color: #e2e8f0; font-size: 13px; outline: none;
+}
+.code-editor-bottom input:focus { border-color: #1a56db; }
+.code-editor-bottom input::placeholder { color: #475569; }
+
+/* AI 코드블록에 "에디터에 적용" 버튼 */
+.apply-to-editor-btn {
+  background: #1e40af; color: #bfdbfe; border: none;
+  padding: 2px 10px; border-radius: 4px; cursor: pointer;
+  font-size: 11px; transition: all 0.15s;
+}
+.apply-to-editor-btn:hover { background: #1a56db; color: white; }
+.apply-to-editor-btn.applied { background: #065f46; color: #6ee7b7; }
+
+/* 이미지 캔버스 패널 래퍼 */
+.image-canvas-panel {
+  display: flex; flex-direction: column; flex: 1; overflow: hidden;
+}
+.image-canvas-panel.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -357,8 +441,17 @@ input[type=color].custom-color {
   <!-- 리사이저 -->
   <div class="resizer" id="resizer"></div>
 
-  <!-- ── 오른쪽: 캔버스 패널 ── -->
+  <!-- ── 오른쪽: 패널 ── -->
   <div class="canvas-panel">
+
+    <!-- 탭 -->
+    <div class="panel-tabs">
+      <button class="panel-tab active" id="tab-image" onclick="switchPanelTab('image')">🖼️ 이미지 드로잉</button>
+      <button class="panel-tab" id="tab-code" onclick="switchPanelTab('code')">📝 코드 에디터</button>
+    </div>
+
+    <!-- ── 이미지 드로잉 패널 ── -->
+    <div class="image-canvas-panel" id="imagePanel">
 
     <!-- 툴바 -->
     <div class="canvas-toolbar">
@@ -423,6 +516,44 @@ input[type=color].custom-color {
         📤 AI에 전송
       </button>
     </div>
+
+    </div><!-- /image-canvas-panel -->
+
+    <!-- ── 코드 에디터 패널 ── -->
+    <div class="code-editor-panel" id="codePanel">
+
+      <!-- 상단 툴바 -->
+      <div class="code-editor-toolbar">
+        <span class="code-lang-badge" id="codeLangBadge">HTML/CSS</span>
+        <span class="code-line-count" id="codeLineCount">0 줄</span>
+        <div class="spacer"></div>
+        <button class="code-action-btn btn-clear-editor" onclick="clearCodeEditor()">지우기</button>
+        <button class="code-action-btn btn-copy-all" id="copyAllBtn" onclick="copyAllCode()">📋 전체 복사</button>
+      </div>
+
+      <!-- 에디터 본문 -->
+      <div class="code-editor-wrap">
+        <div class="line-numbers" id="lineNumbers"></div>
+        <textarea id="codeEditor"
+          placeholder="여기에 수정할 HTML/CSS 코드를 붙여넣으세요.
+알FTP에서 파일 열기 → 전체 선택(Ctrl+A) → 복사(Ctrl+C) → 여기 붙여넣기(Ctrl+V)
+그 다음 왼쪽 채팅에서 수정 요청하면 AI가 코드를 직접 수정해줍니다."
+          oninput="onCodeEditorInput()"
+          onscroll="syncScroll()"
+          onkeydown="handleEditorTab(event)"
+        ></textarea>
+      </div>
+
+      <!-- 하단: 코드 전송 -->
+      <div class="code-editor-bottom">
+        <input type="text" id="codePrompt"
+          placeholder="수정 요청 입력 (예: 예약 버튼 배경색을 파란색으로, 글자 크기 16px로 변경)"
+          onkeydown="if(event.key==='Enter') sendCodeMessage()">
+        <button class="code-action-btn btn-copy-all" onclick="sendCodeMessage()">💬 AI에 전송</button>
+      </div>
+
+    </div><!-- /code-editor-panel -->
+
   </div>
 </div>
 
@@ -734,6 +865,17 @@ function appendMessage(role, content) {
       cb.className='copy-btn'; cb.textContent='복사';
       cb.onclick = () => copyCode(block.textContent, cb);
       hdr.appendChild(cb);
+      // 에디터에 적용 버튼
+      const applyBtn = document.createElement('button');
+      applyBtn.className = 'apply-to-editor-btn';
+      applyBtn.textContent = '→ 에디터에 적용';
+      applyBtn.onclick = () => {
+        setCodeEditorContent(block.textContent);
+        applyBtn.textContent = '✓ 적용됨';
+        applyBtn.classList.add('applied');
+        setTimeout(() => { applyBtn.textContent = '→ 에디터에 적용'; applyBtn.classList.remove('applied'); }, 2000);
+      };
+      hdr.appendChild(applyBtn);
       const pre = block.parentElement;
       wrapper.appendChild(hdr);
       wrapper.appendChild(pre.cloneNode(true));
@@ -1083,6 +1225,108 @@ function initResizer() {
     document.body.style.cursor='';
     document.body.style.userSelect='';
   });
+}
+
+// ════════════════════════════════════════════
+//  패널 탭 전환
+// ════════════════════════════════════════════
+let currentPanelTab = 'image';
+
+function switchPanelTab(tab) {
+  currentPanelTab = tab;
+  document.getElementById('tab-image').classList.toggle('active', tab==='image');
+  document.getElementById('tab-code').classList.toggle('active', tab==='code');
+  document.getElementById('imagePanel').classList.toggle('hidden', tab!=='image');
+  document.getElementById('codePanel').classList.toggle('active', tab==='code');
+}
+
+// ════════════════════════════════════════════
+//  코드 에디터
+// ════════════════════════════════════════════
+function onCodeEditorInput() {
+  updateLineNumbers();
+  updateLineCount();
+}
+
+function updateLineNumbers() {
+  const lines = document.getElementById('codeEditor').value.split('\n').length;
+  document.getElementById('lineNumbers').innerHTML =
+    Array.from({length: lines}, (_,i) => `<div>${i+1}</div>`).join('');
+}
+
+function updateLineCount() {
+  const code = document.getElementById('codeEditor').value;
+  const lines = code ? code.split('\n').length : 0;
+  document.getElementById('codeLineCount').textContent = lines + ' 줄';
+  // 언어 자동 감지
+  const lang = code.includes('<!DOCTYPE') || code.includes('<html') ? 'HTML'
+    : code.includes('{') && code.includes(':') && !code.includes('<') ? 'CSS'
+    : code.includes('function') || code.includes('const ') ? 'JS' : 'HTML/CSS';
+  document.getElementById('codeLangBadge').textContent = lang;
+}
+
+function syncScroll() {
+  const editor = document.getElementById('codeEditor');
+  document.getElementById('lineNumbers').scrollTop = editor.scrollTop;
+}
+
+function handleEditorTab(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const el = e.target;
+    const start = el.selectionStart, end = el.selectionEnd;
+    el.value = el.value.substring(0,start) + '  ' + el.value.substring(end);
+    el.selectionStart = el.selectionEnd = start + 2;
+    onCodeEditorInput();
+  }
+}
+
+function clearCodeEditor() {
+  document.getElementById('codeEditor').value = '';
+  onCodeEditorInput();
+}
+
+function copyAllCode() {
+  const code = document.getElementById('codeEditor').value;
+  if (!code.trim()) return;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyAllBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ 복사됨!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function setCodeEditorContent(code) {
+  document.getElementById('codeEditor').value = code;
+  onCodeEditorInput();
+  // 코드 탭으로 자동 전환
+  switchPanelTab('code');
+}
+
+// 코드 에디터에서 AI에 전송
+async function sendCodeMessage() {
+  const prompt = document.getElementById('codePrompt').value.trim();
+  const code   = document.getElementById('codeEditor').value.trim();
+  if (!prompt || isLoading) return;
+  if (!apiKey) { showApiModal(); return; }
+
+  document.getElementById('welcome')?.remove();
+
+  let userText;
+  if (code) {
+    userText = `다음 코드를 수정해줘:\n\`\`\`html\n${code}\n\`\`\`\n\n요청: ${prompt}\n\n수정된 전체 코드를 코드블록으로 제공해줘.`;
+  } else {
+    userText = prompt;
+  }
+
+  appendMessage('user', `📝 [코드 수정 요청] ${prompt}`);
+  conversationHistory.push({ role:'user', content: userText });
+  saveHistory();
+
+  document.getElementById('codePrompt').value = '';
+  await doAiCall();
 }
 </script>
 </body>
