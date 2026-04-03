@@ -782,6 +782,8 @@ async function doAiCall() {
     appendMessage('assistant', reply);
     conversationHistory.push({ role:'assistant', content:reply });
     saveHistory();
+    // 코드블록 자동 에디터 반영
+    autoApplyCodeToEditor(reply);
   } catch(err) {
     removeLoading(loadingId);
     appendError(err.message);
@@ -1296,6 +1298,34 @@ function copyAllCode() {
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
   });
+}
+
+// AI 응답에서 가장 긴 코드블록 추출 → 에디터 자동 반영
+function autoApplyCodeToEditor(reply) {
+  // ```html, ```css, ```js, ``` 등 코드블록 추출
+  const matches = [...reply.matchAll(/```[\w]*\n([\s\S]*?)```/g)];
+  if (!matches.length) return;
+
+  // 가장 긴 코드블록 선택 (핵심 코드일 가능성 높음)
+  const longest = matches.reduce((a, b) => a[1].length >= b[1].length ? a : b);
+  const code = longest[1].trim();
+  if (!code) return;
+
+  // 에디터에 적용
+  document.getElementById('codeEditor').value = code;
+  onCodeEditorInput();
+
+  // 코드 탭 상단에 "자동 업데이트됨" 표시
+  const badge = document.getElementById('codeLangBadge');
+  const orig = badge.textContent;
+  badge.textContent = '✓ 자동 업데이트됨';
+  badge.style.background = '#065f46';
+  badge.style.color = '#6ee7b7';
+  setTimeout(() => {
+    badge.textContent = orig;
+    badge.style.background = '';
+    badge.style.color = '';
+  }, 3000);
 }
 
 function setCodeEditorContent(code) {
