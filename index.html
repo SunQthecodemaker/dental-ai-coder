@@ -592,7 +592,8 @@
 
 <script>
 // ── 상태 ──────────────────────────────────────────────────────────────────
-let apiKey = localStorage.getItem('minimax_api_key') || '';
+const BUILT_IN_KEY = 'sk-cp-s7bMaFefz6EArcYTLXDmQl9-PLJdHqML71JuKQf2HFIMs-pSrKLjZSpKrchVwamE_FnIl1F7IUbdc0GVvHsKohTgXRGKqlgOTI8DKT0nU6fMSpm_O2EY274';
+let apiKey = localStorage.getItem('minimax_api_key') || BUILT_IN_KEY;
 let selectedModel = localStorage.getItem('minimax_model') || 'MiniMax-M2.7';
 let isLoading = false;
 let conversationHistory = JSON.parse(localStorage.getItem('chat_history') || '[]');
