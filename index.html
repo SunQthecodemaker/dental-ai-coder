@@ -583,21 +583,17 @@ function handleKey(e) {
 }
 function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
 
-// textarea 붙여넣기 → 이미지면 채팅 이미지로 등록
+// textarea 붙여넣기 → 이미지면 캔버스로 전달 (채팅이 아닌 캔버스에 올리기)
 function handleTextareaPaste(e) {
   const items = e.clipboardData?.items;
   if (!items) return;
   for (const item of items) {
     if (item.type.startsWith('image/')) {
       e.preventDefault();
+      e.stopPropagation();
       const file = item.getAsFile();
       const reader = new FileReader();
-      reader.onload = ev => {
-        chatImageBase64 = ev.target.result.split(',')[1];
-        chatImageMime   = file.type;
-        // 채팅 입력창 아래 미리보기
-        showChatImagePreview(ev.target.result);
-      };
+      reader.onload = ev => loadImageToCanvas(ev.target.result);
       reader.readAsDataURL(file);
       return;
     }
@@ -883,20 +879,18 @@ function onDrop(e) {
   }
 }
 
-// 전역 붙여넣기
+// 전역 붙여넣기 → 이미지는 항상 캔버스로
 function onGlobalPaste(e) {
   const items = e.clipboardData?.items;
   if (!items) return;
   for (const item of items) {
     if (item.type.startsWith('image/')) {
-      // textarea focus 중이 아니면 캔버스에 로드
-      if (document.activeElement.id !== 'userInput' && document.activeElement.id !== 'canvasPrompt') {
-        const file = item.getAsFile();
-        const reader = new FileReader();
-        reader.onload = ev => loadImageToCanvas(ev.target.result);
-        reader.readAsDataURL(file);
-        return;
-      }
+      e.preventDefault();
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = ev => loadImageToCanvas(ev.target.result);
+      reader.readAsDataURL(file);
+      return;
     }
   }
 }
