@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>치과 홈페이지 AI 코드 도우미</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: #f0f4f8;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 헤더 */
+  header {
+    background: #1a56db;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  header h1 span.icon { font-size: 20px; }
+
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .api-status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.15);
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: background 0.2s;
+  }
+  .api-status:hover { background: rgba(255,255,255,0.25); }
+  .api-status.connected { background: rgba(52,211,153,0.25); border-color: rgba(52,211,153,0.5); }
+
+  .conn-badge {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.1);
+  }
+  .conn-badge .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .conn-badge.checking .dot {
+    background: #fbbf24;
+    animation: pulse-dot 1s infinite;
+  }
+  .conn-badge.ok .dot { background: #34d399; }
+  .conn-badge.ok { background: rgba(52,211,153,0.2); border-color: rgba(52,211,153,0.4); }
+  .conn-badge.fail .dot { background: #f87171; }
+  .conn-badge.fail { background: rgba(248,113,113,0.2); border-color: rgba(248,113,113,0.4); }
+  .conn-badge.none .dot { background: #94a3b8; }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .clear-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .clear-btn:hover { background: rgba(255,255,255,0.25); }
+
+  /* 메인 레이아웃 */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* 사이드바 */
+  .sidebar {
+    width: 220px;
+    background: white;
+    border-right: 1px solid #e2e8f0;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+  }
+
+  .preset-btn {
+    width: 100%;
+    text-align: left;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .preset-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+  .preset-btn .label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+  /* 채팅 영역 */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 웰컴 메시지 */
+  .welcome {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+  }
+  .welcome .emoji { font-size: 48px; margin-bottom: 12px; }
+  .welcome h2 { font-size: 20px; color: #1e293b; margin-bottom: 8px; }
+  .welcome p { font-size: 14px; line-height: 1.6; }
+
+  /* 메시지 버블 */
+  .msg { display: flex; gap: 10px; max-width: 100%; }
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .msg.user .avatar { background: #dbeafe; }
+  .msg.assistant .avatar { background: #f0fdf4; }
+
+  .bubble {
+    max-width: calc(100% - 90px);
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  .msg.user .bubble {
+    background: #1a56db;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.assistant .bubble {
+    background: white;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  /* 마크다운 스타일 */
+  .bubble h1, .bubble h2, .bubble h3 {
+    margin: 12px 0 6px;
+    color: #1e293b;
+    font-size: 15px;
+  }
+  .bubble p { margin-bottom: 8px; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .bubble ul, .bubble ol { padding-left: 20px; margin-bottom: 8px; }
+  .bubble li { margin-bottom: 4px; }
+  .bubble strong { font-weight: 600; }
+  .bubble code:not(pre code) {
+    background: #f1f5f9;
+    color: #e11d48;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+  }
+  .msg.user .bubble code:not(pre code) {
+    background: rgba(255,255,255,0.2);
+    color: #fde68a;
+  }
+
+  /* 코드 블록 */
+  .code-wrapper {
+    margin: 10px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #2d3748;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1a202c;
+    padding: 7px 14px;
+    font-size: 12px;
+    color: #a0aec0;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid #4a5568;
+    color: #a0aec0;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: #4a5568; color: white; }
+  .copy-btn.copied { background: #276749; border-color: #276749; color: #9ae6b4; }
+
+  pre { margin: 0 !important; }
+  pre code { border-radius: 0 !important; }
+
+  /* 로딩 */
+  .loading-dots {
+    display: flex;
+    gap: 5px;
+    padding: 8px 0;
+  }
+  .loading-dots span {
+    width: 8px; height: 8px;
+    background: #94a3b8;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* 입력창 */
+  .input-area {
+    padding: 14px 20px 16px;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  textarea {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    min-height: 46px;
+    max-height: 160px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+    color: #1e293b;
+  }
+  textarea:focus { border-color: #1a56db; }
+  textarea::placeholder { color: #94a3b8; }
+
+  .send-btn {
+    width: 46px;
+    height: 46px;
+    background: #1a56db;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.2s, transform 0.1s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .send-btn:hover { background: #1e40af; }
+  .send-btn:active { transform: scale(0.95); }
+  .send-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 8px;
+  }
+
+  /* API 키 모달 */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    width: 420px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+
+  .modal h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #1e293b;
+  }
+
+  .modal p {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .modal label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+
+  .modal input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 8px;
+    font-family: monospace;
+  }
+  .modal input:focus { border-color: #1a56db; }
+
+  .model-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 20px;
+    background: white;
+    color: #1e293b;
+  }
+  .model-select:focus { border-color: #1a56db; }
+
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    padding: 10px 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-save {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 10px;
+    background: #1a56db;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .btn-save:hover { background: #1e40af; }
+
+  .api-guide {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.7;
+    border: 1px solid #e2e8f0;
+  }
+  .api-guide a { color: #1a56db; }
+
+  /* 에러 */
+  .error-msg {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin: 4px 0;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="icon">🦷</span> 치과 홈페이지 AI 코드 도우미</h1>
+  <div class="header-right">
+    <div class="conn-badge none" id="connBadge">
+      <span class="dot"></span>
+      <span id="connText">API 미설정</span>
+    </div>
+    <button class="clear-btn" onclick="clearChat()">대화 초기화</button>
+    <button class="api-status" id="apiStatus" onclick="showApiModal()">⚙️ API 설정</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- 사이드바: 빠른 질문 -->
+  <div class="sidebar">
+    <div class="sidebar-title">빠른 질문</div>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      섹션 배너 만들기
+      <div class="label">치과 홈페이지용 히어로 배너 HTML/CSS</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      진료 안내 카드
+      <div class="label">진료과목 카드형 UI 코드</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      예약 폼 만들기
+      <div class="label">온라인 예약 신청 폼 HTML</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      의료진 소개 섹션
+      <div class="label">의사 프로필 카드 레이아웃</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      네비게이션 메뉴
+      <div class="label">반응형 상단 메뉴 바 코드</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      오시는 길 섹션
+      <div class="label">지도 + 교통편 안내 레이아웃</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      팝업/모달 창
+      <div class="label">공지사항 팝업 또는 모달 코드</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      색상/폰트 변경
+      <div class="label">기존 코드의 디자인 수정 방법</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      모바일 대응
+      <div class="label">반응형 처리 방법 (미디어쿼리)</div>
+    </button>
+
+    <button class="preset-btn" onclick="sendPreset(this)">
+      코드 오류 수정
+      <div class="label">붙여넣기한 코드의 오류 찾기</div>
+    </button>
+  </div>
+
+  <!-- 채팅 영역 -->
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="emoji">🦷</div>
+        <h2>안녕하세요! 치과 홈페이지 코드 도우미입니다</h2>
+        <p>왼쪽 빠른 질문 버튼을 누르거나<br>아래에 직접 질문을 입력해주세요.<br><br>
+        코드 수정, 새 섹션 만들기, 오류 해결 등 무엇이든 도와드려요!</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea
+          id="userInput"
+          placeholder="질문을 입력하세요... (예: 예약 버튼 색을 파란색으로 바꾸고 싶어요)"
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+      </div>
+      <div class="hint">Enter로 전송 · Shift+Enter로 줄바꿈</div>
+    </div>
+  </div>
+</div>
+
+<!-- API 설정 모달 -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <h2>🔑 API 설정</h2>
+    <p>MiniMax API 키를 입력하면 AI 코드 도우미를 사용할 수 있습니다.<br>키는 이 브라우저에만 저장되고 외부로 전송되지 않습니다.</p>
+
+    <div class="api-guide">
+      📌 API 키 발급: <a href="https://www.minimaxi.com/user-center/basic-information/interface-key" target="_blank">MiniMax 콘솔</a>에서 발급받으세요.<br>
+      무료 크레딧이 제공되며 별도 결제 없이 시작 가능합니다.
+    </div>
+
+    <label>API Key</label>
+    <input type="password" id="apiKeyInput" placeholder="eyJhbGci..." />
+
+    <label>모델 선택</label>
+    <select class="model-select" id="modelSelect">
+      <option value="MiniMax-M2.7">MiniMax M2.7 (최신, 권장)</option>
+      <option value="MiniMax-M2">MiniMax M2</option>
+      <option value="MiniMax-Text-01">MiniMax Text-01</option>
+      <option value="abab6.5s-chat">ABAB 6.5s (빠름)</option>
+      <option value="abab6.5-chat">ABAB 6.5</option>
+    </select>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="hideApiModal()">취소</button>
+      <button class="btn-save" onclick="saveApiKey()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 상태 ──────────────────────────────────────────────────────────────────
+let apiKey = localStorage.getItem('minimax_api_key') || '';
+let selectedModel = localStorage.getItem('minimax_model') || 'MiniMax-M2.7';
+let isLoading = false;
+let conversationHistory = JSON.parse(localStorage.getItem('chat_history') || '[]');
+
+// 시스템 프롬프트
+const SYSTEM_PROMPT = `당신은 치과 홈페이지 제작을 도와주는 친절한 웹 개발 전문가입니다.
+
+역할:
+- 비개발자 직원이 치과 홈페이지를 만들 수 있도록 쉽게 설명합니다
+- HTML, CSS, JavaScript 코드를 작성하고 설명해 줍니다
+- 기존 코드의 오류를 찾고 수정합니다
+- 복잡한 개념은 쉬운 말로 풀어서 설명합니다
+
+코드 작성 원칙:
+- 완성도 높은 실제 사용 가능한 코드를 제공합니다
+- 주석을 충분히 달아 비개발자도 이해하기 쉽게 합니다
+- 치과 홈페이지에 어울리는 전문적이고 신뢰감 있는 디자인을 추천합니다
+- 모바일 반응형을 기본으로 고려합니다
+
+응답 방식:
+- 친근하고 쉬운 한국어로 답변합니다
+- 코드를 제공할 때는 어디에 붙여넣으면 되는지 설명합니다
+- 단계별로 설명이 필요한 경우 번호를 매겨 안내합니다`;
+
+// ── 초기화 ─────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  updateApiStatus();
+  if (!apiKey) {
+    setTimeout(showApiModal, 500);
+  } else {
+    testApiConnection();
+  }
+  document.getElementById('apiKeyInput').value = apiKey;
+  document.getElementById('modelSelect').value = selectedModel;
+  loadHistory();
+});
+
+// ── API 상태 표시 ──────────────────────────────────────────────────────────
+function updateApiStatus() {
+  const btn = document.getElementById('apiStatus');
+  if (apiKey) {
+    btn.textContent = '⚙️ API 설정';
+    btn.classList.add('connected');
+  } else {
+    btn.textContent = '⚙️ API 설정';
+    btn.classList.remove('connected');
+  }
+}
+
+function setConnBadge(state, text) {
+  const badge = document.getElementById('connBadge');
+  const label = document.getElementById('connText');
+  badge.className = 'conn-badge ' + state;
+  label.textContent = text;
+}
+
+async function testApiConnection() {
+  if (!apiKey) {
+    setConnBadge('none', 'API 미설정');
+    return;
+  }
+  setConnBadge('checking', '연결 확인 중...');
+  try {
+    const res = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: [
+          { role: 'system', content: '한 단어로만 답하세요.' },
+          { role: 'user', content: '안녕' }
+        ],
+        max_tokens: 10
+      })
+    });
+    if (res.ok) {
+      setConnBadge('ok', 'MiniMax 연결됨');
+    } else {
+      const err = await res.json().catch(() => ({}));
+      const msg = err?.error?.message || err?.base_resp?.status_msg || `오류 ${res.status}`;
+      setConnBadge('fail', '연결 실패: ' + msg.slice(0, 20));
+    }
+  } catch (e) {
+    setConnBadge('fail', '네트워크 오류');
+  }
+}
+
+// ── 모달 ───────────────────────────────────────────────────────────────────
+function showApiModal() {
+  document.getElementById('apiKeyInput').value = apiKey;
+  document.getElementById('modelSelect').value = selectedModel;
+  document.getElementById('apiModal').classList.add('show');
+}
+
+function hideApiModal() {
+  document.getElementById('apiModal').classList.remove('show');
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  const model = document.getElementById('modelSelect').value;
+  if (!key) {
+    alert('API 키를 입력해주세요.');
+    return;
+  }
+  apiKey = key;
+  selectedModel = model;
+  localStorage.setItem('minimax_api_key', key);
+  localStorage.setItem('minimax_model', model);
+  updateApiStatus();
+  hideApiModal();
+  testApiConnection();
+}
+
+document.getElementById('apiModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('apiModal')) hideApiModal();
+});
+
+// ── 채팅 ───────────────────────────────────────────────────────────────────
+function saveHistory() {
+  localStorage.setItem('chat_history', JSON.stringify(conversationHistory));
+}
+
+function clearChat() {
+  conversationHistory = [];
+  localStorage.removeItem('chat_history');
+  document.getElementById('messages').innerHTML = `
+    <div class="welcome" id="welcome">
+      <div class="emoji">🦷</div>
+      <h2>안녕하세요! 치과 홈페이지 코드 도우미입니다</h2>
+      <p>왼쪽 빠른 질문 버튼을 누르거나<br>아래에 직접 질문을 입력해주세요.<br><br>
+      코드 수정, 새 섹션 만들기, 오류 해결 등 무엇이든 도와드려요!</p>
+    </div>`;
+}
+
+function loadHistory() {
+  if (conversationHistory.length === 0) return;
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+  conversationHistory.forEach(msg => appendMessage(msg.role, msg.content));
+}
+
+function sendPreset(btn) {
+  const text = btn.firstChild.textContent.trim();
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+
+  if (!apiKey) {
+    showApiModal();
+    return;
+  }
+
+  // 웰컴 메시지 제거
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+
+  // 사용자 메시지 추가
+  appendMessage('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+
+  // 히스토리에 추가
+  conversationHistory.push({ role: 'user', content: text });
+  saveHistory();
+
+  // 로딩 표시
+  const loadingId = appendLoading();
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  try {
+    const reply = await callMiniMax(conversationHistory);
+    removeLoading(loadingId);
+    appendMessage('assistant', reply);
+    conversationHistory.push({ role: 'assistant', content: reply });
+    saveHistory();
+  } catch (err) {
+    removeLoading(loadingId);
+    appendError(err.message);
+  } finally {
+    isLoading = false;
+    document.getElementById('sendBtn').disabled = false;
+    input.focus();
+  }
+}
+
+// ── MiniMax API 호출 ────────────────────────────────────────────────────────
+async function callMiniMax(history) {
+  const response = await fetch('https://api.minimaxi.chat/v1/text/chatcompletion_v2', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: selectedModel,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...history
+      ],
+      max_tokens: 4096,
+      temperature: 0.3,
+      top_p: 0.9
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const msg = err?.error?.message || err?.base_resp?.status_msg || `HTTP ${response.status}`;
+    throw new Error(`API 오류: ${msg}`);
+  }
+
+  const data = await response.json();
+
+  // MiniMax 응답 형식 처리
+  const content = data?.choices?.[0]?.message?.content
+    ?? data?.choices?.[0]?.messages?.[0]?.text
+    ?? data?.reply
+    ?? '';
+
+  if (!content) throw new Error('응답을 받지 못했습니다. API 키 또는 모델을 확인해주세요.');
+  return content;
+}
+
+// ── 렌더링 ─────────────────────────────────────────────────────────────────
+function appendMessage(role, content) {
+  const messages = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  if (role === 'assistant') {
+    bubble.innerHTML = renderMarkdown(content);
+    // 코드 블록에 복사 버튼 추가
+    bubble.querySelectorAll('pre code').forEach(block => {
+      hljs.highlightElement(block);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-wrapper';
+      const header = document.createElement('div');
+      header.className = 'code-header';
+      const lang = block.className.replace('language-', '').replace('hljs', '').trim() || 'code';
+      header.innerHTML = `<span>${lang}</span>`;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '복사';
+      copyBtn.onclick = () => copyCode(block.textContent, copyBtn);
+      header.appendChild(copyBtn);
+      const pre = block.parentElement;
+      wrapper.appendChild(header);
+      wrapper.appendChild(pre.cloneNode(true));
+      pre.replaceWith(wrapper);
+    });
+  } else {
+    bubble.textContent = content;
+  }
+
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function renderMarkdown(text) {
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+    highlight: false // hljs 로 별도 처리
+  });
+  return marked.parse(text);
+}
+
+function appendLoading() {
+  const messages = document.getElementById('messages');
+  const id = 'loading-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.id = id;
+  div.innerHTML = `
+    <div class="avatar">🤖</div>
+    <div class="bubble">
+      <div class="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return id;
+}
+
+function removeLoading(id) {
+  document.getElementById(id)?.remove();
+}
+
+function appendError(msg) {
+  const messages = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'error-msg';
+  div.textContent = '⚠️ ' + msg;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function copyCode(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '복사';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
