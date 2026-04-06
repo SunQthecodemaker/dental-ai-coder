@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>보이스 인박스</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      margin-bottom: 28px;
+      color: #c8c8e0;
+    }
+
+    .mic-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    #micBtn {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: none;
+      background: #1e1e2e;
+      color: #7878b8;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 0 0 rgba(120,120,200,0);
+      position: relative;
+    }
+
+    #micBtn:hover { background: #252538; }
+
+    #micBtn.recording {
+      background: #2a1a2e;
+      color: #d060d0;
+      box-shadow: 0 0 0 8px rgba(200,80,200,0.12);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 8px rgba(200,80,200,0.12); }
+      50% { box-shadow: 0 0 0 16px rgba(200,80,200,0.04); }
+    }
+
+    #micStatus {
+      font-size: 0.82rem;
+      color: #666680;
+      height: 18px;
+    }
+
+    .text-input-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 28px;
+    }
+
+    #textInput {
+      flex: 1;
+      background: #1a1a28;
+      border: 1px solid #2a2a40;
+      border-radius: 10px;
+      color: #e8e8f0;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #textInput:focus { border-color: #4a4a80; }
+    #textInput::placeholder { color: #44446a; }
+
+    #sendTextBtn {
+      background: #252540;
+      border: 1px solid #3a3a60;
+      border-radius: 10px;
+      color: #8888cc;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    #sendTextBtn:hover { background: #2e2e50; }
+
+    #preview {
+      width: 100%;
+      max-width: 480px;
+      background: #1a1a28;
+      border: 1px solid #2a2a40;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .preview-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .preview-label {
+      font-size: 0.72rem;
+      color: #555578;
+      width: 32px;
+      flex-shrink: 0;
+    }
+
+    .preview-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #d8d8f0;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .cat-할일 { background: #1e3a2e; color: #60c080; }
+    .cat-일정 { background: #1e2a3e; color: #6090d0; }
+    .cat-아이디어 { background: #2e2a1e; color: #c0a040; }
+    .cat-쇼핑 { background: #2a1e3e; color: #a060d0; }
+    .cat-연락 { background: #3a1e2a; color: #d06090; }
+    .cat-메모 { background: #1e1e2e; color: #8888aa; }
+    .cat-기타 { background: #1e1e2e; color: #8888aa; }
+
+    .preview-content {
+      font-size: 0.85rem;
+      color: #9090b0;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn-save {
+      flex: 1;
+      background: #252550;
+      border: 1px solid #3a3a70;
+      border-radius: 8px;
+      color: #9090d0;
+      padding: 9px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-save:hover { background: #2e2e60; }
+
+    .btn-discard {
+      background: #1e1e2e;
+      border: 1px solid #2a2a40;
+      border-radius: 8px;
+      color: #555578;
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-discard:hover { background: #252535; }
+
+    #processing {
+      font-size: 0.82rem;
+      color: #666688;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: #252540;
+      border: 1px solid #3a3a60;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 0.85rem;
+      color: #9090cc;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    .section-title {
+      width: 100%;
+      max-width: 480px;
+      font-size: 0.78rem;
+      color: #44446a;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    #savedList {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .saved-item {
+      background: #151520;
+      border: 1px solid #222235;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .saved-item-text { flex: 1; }
+    .saved-item-title { font-size: 0.88rem; color: #c8c8e0; font-weight: 500; }
+    .saved-item-meta { font-size: 0.75rem; color: #44446a; margin-top: 2px; }
+
+    #noSpeech {
+      display: none;
+      font-size: 0.82rem;
+      color: #555570;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>보이스 인박스</h1>
+
+  <div class="mic-area">
+    <button id="micBtn" title="누르고 말하기">🎙️</button>
+    <div id="micStatus">버튼을 눌러 음성 입력</div>
+  </div>
+
+  <div id="noSpeech">음성 인식이 지원되지 않는 브라우저입니다.<br>아래 텍스트 입력을 사용하세요.</div>
+
+  <div class="text-input-row">
+    <input id="textInput" type="text" placeholder="또는 텍스트로 입력..." />
+    <button id="sendTextBtn">분류 저장</button>
+  </div>
+
+  <div id="processing">분류 중...</div>
+
+  <div id="preview">
+    <div class="preview-row">
+      <span class="preview-label">제목</span>
+      <span id="prevTitle" class="preview-title"></span>
+    </div>
+    <div class="preview-row">
+      <span class="preview-label">분류</span>
+      <span id="prevCategory" class="category-badge"></span>
+    </div>
+    <div id="prevContent" class="preview-content"></div>
+    <div class="preview-actions">
+      <button class="btn-save" id="saveBtn">Notion에 저장</button>
+      <button class="btn-discard" id="discardBtn">취소</button>
+    </div>
+  </div>
+
+  <div class="section-title" id="listLabel" style="display:none">최근 항목</div>
+  <div id="savedList"></div>
+  <div id="toast"></div>
+
+  <script>
+    const API_BASE = 'https://chnqtrmlglqdmzqwsazm.supabase.co/functions/v1/voice-inbox';
+
+    let currentData = null;
+    const savedItems = JSON.parse(localStorage.getItem('voiceInbox') || '[]');
+
+    const micBtn = document.getElementById('micBtn');
+    const micStatus = document.getElementById('micStatus');
+    const textInput = document.getElementById('textInput');
+    const sendTextBtn = document.getElementById('sendTextBtn');
+    const processing = document.getElementById('processing');
+    const preview = document.getElementById('preview');
+    const prevTitle = document.getElementById('prevTitle');
+    const prevCategory = document.getElementById('prevCategory');
+    const prevContent = document.getElementById('prevContent');
+    const saveBtn = document.getElementById('saveBtn');
+    const discardBtn = document.getElementById('discardBtn');
+    const savedList = document.getElementById('savedList');
+    const listLabel = document.getElementById('listLabel');
+    const toast = document.getElementById('toast');
+    const noSpeech = document.getElementById('noSpeech');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isRecording = false;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onresult = (e) => {
+        const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+        textInput.value = transcript;
+        if (e.results[e.results.length - 1].isFinal) {
+          stopRecording();
+          processText(transcript);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        stopRecording();
+        micStatus.textContent = '인식 실패. 다시 시도하세요.';
+      };
+
+      recognition.onend = () => { if (isRecording) stopRecording(); };
+
+    } else {
+      noSpeech.style.display = 'block';
+      micBtn.style.opacity = '0.3';
+      micBtn.disabled = true;
+    }
+
+    function startRecording() {
+      if (!recognition) return;
+      isRecording = true;
+      micBtn.classList.add('recording');
+      micStatus.textContent = '말하세요...';
+      textInput.value = '';
+      recognition.start();
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      micStatus.textContent = '버튼을 눌러 음성 입력';
+      try { recognition.stop(); } catch {}
+    }
+
+    micBtn.addEventListener('click', () => {
+      if (isRecording) stopRecording();
+      else startRecording();
+    });
+
+    sendTextBtn.addEventListener('click', () => {
+      const t = textInput.value.trim();
+      if (t) processText(t);
+    });
+
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const t = textInput.value.trim();
+        if (t) processText(t);
+      }
+    });
+
+    async function processText(text) {
+      processing.style.display = 'block';
+      preview.style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_BASE}/classify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        if (!res.ok) throw new Error('분류 실패');
+        const data = await res.json();
+
+        currentData = {
+          title: data.title,
+          category: data.category,
+          content: data.summary || text,
+          original: text
+        };
+
+        showPreview(currentData);
+
+      } catch (err) {
+        const fallback = localClassify(text);
+        currentData = { ...fallback, original: text };
+        showPreview(currentData);
+      } finally {
+        processing.style.display = 'none';
+      }
+    }
+
+    function showPreview(data) {
+      prevTitle.textContent = data.title;
+      prevCategory.textContent = data.category;
+      prevCategory.className = `category-badge cat-${data.category}`;
+      prevContent.textContent = data.content;
+      preview.style.display = 'block';
+    }
+
+    saveBtn.addEventListener('click', async () => {
+      if (!currentData) return;
+
+      saveBtn.textContent = '저장 중...';
+      saveBtn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/notion`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: currentData.title,
+            category: currentData.category,
+            content: currentData.content,
+            status: '신규'
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '저장 실패');
+
+        saveLocally(currentData);
+        showToast('Notion에 저장됐어요!');
+        hidePreview();
+
+      } catch (err) {
+        saveLocally(currentData);
+        showToast('로컬 저장됨 (Notion 연결 확인 필요)');
+        hidePreview();
+      } finally {
+        saveBtn.textContent = 'Notion에 저장';
+        saveBtn.disabled = false;
+      }
+    });
+
+    discardBtn.addEventListener('click', hidePreview);
+
+    function hidePreview() {
+      preview.style.display = 'none';
+      currentData = null;
+      textInput.value = '';
+    }
+
+    function saveLocally(data) {
+      const item = {
+        ...data,
+        date: new Date().toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      };
+      savedItems.unshift(item);
+      if (savedItems.length > 50) savedItems.pop();
+      localStorage.setItem('voiceInbox', JSON.stringify(savedItems));
+      renderList();
+    }
+
+    function renderList() {
+      if (savedItems.length === 0) { listLabel.style.display = 'none'; return; }
+      listLabel.style.display = 'block';
+      savedList.innerHTML = savedItems.slice(0, 10).map(item => `
+        <div class="saved-item">
+          <div>
+            <span class="category-badge cat-${item.category}" style="font-size:0.7rem;padding:1px 8px;">${item.category}</span>
+          </div>
+          <div class="saved-item-text">
+            <div class="saved-item-title">${item.title}</div>
+            <div class="saved-item-meta">${item.date}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    function localClassify(text) {
+      const t = text;
+      let category = '메모';
+      if (/해야|하기|할것|처리|완료|끝내|마무리|제출|보내|수정|확인해/.test(t)) category = '할일';
+      else if (/시|분|날|일정|약속|미팅|회의|방문|예약|언제|다음주|오늘|내일|모레/.test(t)) category = '일정';
+      else if (/아이디어|생각|기획|개선|제안|어떨까|만들면/.test(t)) category = '아이디어';
+      else if (/사야|구매|주문|장보기|쇼핑|필요한|사다/.test(t)) category = '쇼핑';
+      else if (/전화|문자|연락|답장|카톡|메시지/.test(t)) category = '연락';
+      return {
+        title: text.length > 20 ? text.slice(0, 20) + '...' : text,
+        category,
+        content: text
+      };
+    }
+
+    renderList();
+  </script>
+</body>
+</html>
