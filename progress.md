@@ -41,12 +41,10 @@
 
 ## 남은 작업 (순서대로)
 
-### Step 2. 백엔드 통일 (Supabase로) ← 다음 작업
-- [ ] voice-inbox.html의 API_BASE를 Supabase URL로 변경
-  - 현재: `https://voice-inbox.sunq818.workers.dev`
-  - 변경: `https://chnqtrmlglqdmzqwsazm.supabase.co/functions/v1/voice-inbox`
-- [ ] API 경로 확인 (/api/classify → /classify, /api/notion → /notion)
-- [ ] 불필요 파일 정리 (package.json, public/ 등)
+### Step 2. 백엔드 통일 (Supabase로) ✅
+- [x] voice-inbox.html의 API_BASE를 Supabase URL로 변경
+- [x] API 경로 수정 (/api/classify → /classify, /api/notion → /notion)
+- [x] 불필요 파일 정리 (package.json, public/ 삭제)
 
 ### Step 3. GitHub Pages 활성화
 - [ ] dental-ai-coder 레포에서 GitHub Pages 설정

@@ -126,7 +126,7 @@
   <div id="toast"></div>
 
   <script>
-    const API_BASE = 'https://voice-inbox.sunq818.workers.dev';
+    const API_BASE = 'https://chnqtrmlglqdmzqwsazm.supabase.co/functions/v1/voice-inbox';
 
     let currentData = null;
     const savedItems = JSON.parse(localStorage.getItem('voiceInbox') || '[]');
@@ -186,7 +186,7 @@
     async function processText(text) {
       processing.style.display = 'block'; preview.style.display = 'none';
       try {
-        const res = await fetch(`${API_BASE}/api/classify`, {
+        const res = await fetch(`${API_BASE}/classify`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
         });
@@ -212,7 +212,7 @@
       if (!currentData) return;
       saveBtn.textContent = '저장 중...'; saveBtn.disabled = true;
       try {
-        const res = await fetch(`${API_BASE}/api/notion`, {
+        const res = await fetch(`${API_BASE}/notion`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: currentData.title, category: currentData.category, content: currentData.content, status: '신규' })
         });
