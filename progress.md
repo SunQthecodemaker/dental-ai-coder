@@ -46,9 +46,10 @@
 - [x] API 경로 수정 (/api/classify → /classify, /api/notion → /notion)
 - [x] 불필요 파일 정리 (package.json, public/ 삭제)
 
-### Step 3. GitHub Pages 활성화
-- [ ] dental-ai-coder 레포에서 GitHub Pages 설정
-- [ ] voice-inbox.html을 정적 호스팅
+### Step 3. GitHub Pages 활성화 ✅
+- [x] 레포를 public으로 변경
+- [x] GitHub Pages 설정 (main 브랜치, / root)
+- [x] 사이트 URL: https://sunqthecodemaker.github.io/dental-ai-coder/voice-inbox.html
 
 ### Step 4. 정리 (선택)
 - [ ] Cloudflare Worker 백업 또는 삭제 결정
